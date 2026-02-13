@@ -42,6 +42,11 @@ class EnhancedErrorHandler {
     
     setupUnhandledRejectionHandling() {
         window.addEventListener('unhandledrejection', (event) => {
+            var msg = (event.reason && (event.reason.message || String(event.reason))) || '';
+            if (msg.indexOf('message channel closed') !== -1 || msg.indexOf('asynchronous response') !== -1) {
+                event.preventDefault();
+                return;
+            }
             this.handleError({
                 message: `Unhandled Promise Rejection: ${event.reason}`,
                 error: event.reason,

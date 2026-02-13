@@ -1195,13 +1195,26 @@
     <script>
 (function(){
 var _lastHidden = 0;
+// Suppress known browser-extension promise error so it doesn't show as "Uncaught" or block UI
+window.addEventListener('unhandledrejection', function(e) {
+    var msg = (e.reason && (e.reason.message || String(e.reason))) || '';
+    if (msg.indexOf('message channel closed') !== -1 || msg.indexOf('asynchronous response') !== -1) {
+        e.preventDefault();
+        e.stopPropagation();
+        return true;
+    }
+}, true);
+function doReload() {
+    try { window.location.reload(); } catch (_) {}
+    window.location.href = window.location.href;
+}
 function showReloadOverlay(){
     if(document.getElementById('mobile-wake-reload-overlay')) return;
     var o = document.createElement('div');
     o.id = 'mobile-wake-reload-overlay';
     o.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,0.95);display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent;';
     o.innerHTML = '<div style="text-align:center;color:#fff;padding:24px;max-width:320px;"><p style="font-size:1.15rem;margin:0 0 8px;font-weight:600;">App unresponsive?</p><p style="font-size:0.95rem;margin:0 0 20px;opacity:0.9;">Tap the button below to reload</p><button type="button" style="padding:14px 28px;font-size:1rem;background:#3b82f6;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600;">Reload app</button></div>';
-    o.onclick = function(e){ if(e.target.tagName === 'BUTTON' || e.target === o) window.location.reload(); };
+    o.onclick = function(e){ if(e.target.tagName === 'BUTTON' || e.target === o) doReload(); };
     document.body.appendChild(o);
 }
 document.addEventListener('visibilitychange', function(){

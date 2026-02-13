@@ -1933,8 +1933,13 @@ window.addEventListener('error', function(event) {
     }
 });
 
-// Promise rejection handler
+// Promise rejection handler (ignore known browser-extension noise)
 window.addEventListener('unhandledrejection', function(event) {
+    var msg = (event.reason && (event.reason.message || String(event.reason))) || '';
+    if (msg.indexOf('message channel closed') !== -1 || msg.indexOf('asynchronous response') !== -1) {
+        event.preventDefault();
+        return;
+    }
     if (window.dataManager && typeof window.dataManager.addErrorLog === 'function') {
         window.dataManager.addErrorLog(event.reason, {
             type: 'unhandled_promise_rejection'

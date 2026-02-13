@@ -187,7 +187,10 @@ class WakeUpRecoverySystem {
         document.head.appendChild(style);
         document.body.appendChild(el);
         const btn = el.querySelector('#driver-reload-app-btn');
-        if (btn) btn.addEventListener('click', function() { window.location.reload(); });
+        if (btn) btn.addEventListener('click', function() {
+            try { window.location.reload(); } catch (_) {}
+            window.location.href = window.location.href;
+        });
         this.driverReconnectOverlay = el;
     }
     
