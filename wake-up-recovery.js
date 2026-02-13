@@ -96,41 +96,49 @@ class WakeUpRecoverySystem {
     }
     
     /**
-     * When driver app returns from background (e.g. phone unlocked), reconnect to server immediately.
-     * World-class: show "Reconnecting..." overlay so app never feels frozen; run work in next tick.
+     * When ANY user (driver, admin, manager) returns from background, reconnect so the app never stays frozen.
+     * World-class: run for all account types; show "Reconnecting..." overlay and refresh data.
      */
     reconnectDriverWhenVisible() {
         const now = Date.now();
         if (this.driverReconnectDebounce && (now - this.driverReconnectDebounce) < 2000) return;
         const auth = (typeof authManager !== 'undefined' && authManager != null && typeof authManager.getCurrentUser === 'function') ? authManager : null;
         const user = auth ? auth.getCurrentUser() : null;
-        if (!user || user.type !== 'driver') return;
         const wasInBackground = this.lastHiddenTime > 0 && (now - this.lastHiddenTime) >= this.mobileBackgroundThreshold;
         if (!wasInBackground) return;
-        
+        if (!user) return;
+
         this.driverReconnectDebounce = now;
-        
-        // Show overlay immediately so driver sees the app responding (no frozen feel)
         this.showDriverReconnectingOverlay();
-        
+
         const self = this;
+        const isDriver = user.type === 'driver';
         let doneCalled = false;
         const done = () => {
             if (doneCalled) return;
             doneCalled = true;
             self.hideDriverReconnectingOverlay();
         };
-        
+
         setTimeout(function doReconnect() {
             try {
                 if (window.webSocketManager && typeof window.webSocketManager.reconnect === 'function') {
                     window.webSocketManager.reconnect();
                 }
+                if (typeof window.updateWebSocketClientInfo === 'function') {
+                    setTimeout(() => { window.updateWebSocketClientInfo(); }, 600);
+                }
                 if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
                     const p = syncManager.syncFromServer();
                     const onDone = () => {
-                        if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                        if (isDriver && window.app && typeof window.app.loadDriverRoutes === 'function') {
                             window.app.loadDriverRoutes();
+                        }
+                        if (!isDriver && window.app) {
+                            if (typeof window.app.refreshDashboard === 'function') window.app.refreshDashboard();
+                            if (window.app.currentSection === 'admin' && typeof window.app.loadAdminPanel === 'function') window.app.loadAdminPanel();
+                            if (window.app.currentSection === 'monitoring' && window.mapManager && typeof window.mapManager.loadBinsOnMap === 'function') window.mapManager.loadBinsOnMap();
+                            if (window.app.currentSection === 'fleet' && window.fleetManager && typeof window.fleetManager.refresh === 'function') window.fleetManager.refresh();
                         }
                         done();
                     };
@@ -141,22 +149,27 @@ class WakeUpRecoverySystem {
                         onDone();
                     }
                 } else {
-                    if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                    if (isDriver && window.app && typeof window.app.loadDriverRoutes === 'function') {
                         window.app.loadDriverRoutes();
+                    }
+                    if (!isDriver && window.app) {
+                        if (typeof window.app.refreshDashboard === 'function') window.app.refreshDashboard();
+                        if (window.app.currentSection === 'admin' && typeof window.app.loadAdminPanel === 'function') window.app.loadAdminPanel();
+                        if (window.app.currentSection === 'monitoring' && window.mapManager && typeof window.mapManager.loadBinsOnMap === 'function') window.mapManager.loadBinsOnMap();
+                        if (window.app.currentSection === 'fleet' && window.fleetManager && typeof window.fleetManager.refresh === 'function') window.fleetManager.refresh();
                     }
                     done();
                 }
-                if (typeof window.updateWebSocketClientInfo === 'function') {
-                    setTimeout(() => { window.updateWebSocketClientInfo(); }, 800);
-                }
-                if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
-                    window.mapManager.startDriverTracking();
-                }
-                if (user && user.id && window.enhancedMessaging && typeof window.enhancedMessaging.loadDriverMessages === 'function') {
-                    window.enhancedMessaging.loadDriverMessages(user.id);
+                if (isDriver) {
+                    if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
+                        try { window.mapManager.startDriverTracking(); } catch (e) { /* skip if not driver context */ }
+                    }
+                    if (user.id && window.enhancedMessaging && typeof window.enhancedMessaging.loadDriverMessages === 'function') {
+                        window.enhancedMessaging.loadDriverMessages(user.id);
+                    }
                 }
             } catch (e) {
-                console.warn('Driver reconnection step failed:', e && e.message);
+                console.warn('Reconnection step failed:', e && e.message);
                 done();
             }
         }, 50);
