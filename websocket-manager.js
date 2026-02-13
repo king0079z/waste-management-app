@@ -183,8 +183,9 @@ class WebSocketManager {
             };
             this.ws.onmessage = this.handleMessage.bind(this);
             this.ws.onclose = this.handleClose.bind(this);
-            this.ws.onerror = (error) => {
+            this.ws.onerror = (ev) => {
                 clearTimeout(connectionTimeout);
+                if (ev.target !== this.ws) return; // ignore if this is the old socket we closed in reconnect()
                 if (!this._wsErrorLogged) {
                     this._wsErrorLogged = true;
                     console.warn('⚠️ WebSocket connection failed (using fallback). Common on cold start or timeout.');
@@ -417,6 +418,7 @@ class WebSocketManager {
     }
     
     handleClose(event) {
+        if (event && event.target !== this.ws) return; // ignore close from the old socket we replaced in reconnect()
         this.clearPongTimeout();
         if (this.ws) { this.ws = null; }
         this.isConnected = false;
@@ -1034,14 +1036,17 @@ class WebSocketManager {
         };
     }
     
-    // Manual reconnect
+    // Manual reconnect (e.g. after wake-from-sleep). Close old socket first; open new one after a short delay to avoid "closed before connection established" errors.
     reconnect() {
-        if (this.ws) {
-            this.ws.close();
+        const oldWs = this.ws;
+        this.ws = null;
+        if (oldWs) {
+            try { oldWs.close(); } catch (_) {}
         }
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
-        this.connect();
+        const self = this;
+        setTimeout(function () { self.connect(); }, 80);
     }
     
     destroy() {
