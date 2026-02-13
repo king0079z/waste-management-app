@@ -1,0 +1,17 @@
+# Render Blueprint – full Node app with WebSockets
+# Deploy: connect this repo in Render Dashboard, or use "New > Blueprint" and select the repo.
+services:
+  - type: web
+    name: waste-management-app
+    runtime: node
+    region: oregon
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_TYPE
+        value: mongodb
+      # Set MONGODB_URI and MONGODB_DATABASE in Render Dashboard (Environment) – do not commit secrets here.

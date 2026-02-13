@@ -1,0 +1,2005 @@
+/* ==============================================================================
+   DRIVER MOBILE UI - World-Class Mobile-First Design
+   Overrides styles.css desktop "phone preview" constraints.
+   Every .driver-only-view rule uses !important to beat styles.css specificity.
+   Compatible with all mobile screens: 320px–430px+ with safe areas and touch targets.
+   ============================================================================== */
+
+/* ---- WORLD-CLASS MOBILE FOUNDATIONS ---- */
+/* Full width: remove styles.css padding so content uses entire screen (no side margins) */
+.driver-only-view {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.driver-only-view * {
+    -webkit-tap-highlight-color: rgba(16, 185, 129, 0.2);
+    tap-highlight-color: rgba(16, 185, 129, 0.2);
+}
+.driver-only-view button,
+.driver-only-view .driver-nav-item,
+.driver-only-view .driver-drawer-item,
+.driver-only-view .driver-action-card,
+.driver-only-view .driver-more-card,
+.driver-only-view .quick-action-btn {
+    -webkit-tap-highlight-color: rgba(16, 185, 129, 0.25);
+    cursor: pointer;
+}
+
+/* Prevent horizontal overflow and rubber-band on whole view */
+body.driver-view-active {
+    overflow-x: hidden !important;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Hide FAB in driver view – Messages tab is used instead; avoids overlap with quick replies */
+body.driver-view-active .fab-container {
+    display: none !important;
+}
+
+/* Hide FAB when driver collection history modal is open – prevents overlap with timeline */
+body.driver-history-modal-open .fab-container {
+    display: none !important;
+}
+
+/* Hide dev/testing and quick actions on driver More page (no impact on behavior) */
+.driver-only-view .driver-more-hidden,
+body.driver-view-active .driver-more-hidden {
+    display: none !important;
+}
+
+/* Wrapper: full width with safe-area horizontal padding so content clears notches */
+.driver-mobile-wrapper {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* ---- MASTER RESET: kill the 450px desktop-preview frame on real phones ---- */
+.driver-only-view .driver-mobile-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;            /* padding set per-page below */
+}
+
+/* ---- Override .driver-mobile-header from styles.css (background, border-radius, margin) ---- */
+.driver-only-view .driver-mobile-header {
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* ---- Override .driver-stats-grid from styles.css (repeat(2,1fr), gap 1rem) ---- */
+.driver-only-view .driver-stats-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* ---- Override .driver-action-buttons-grid from styles.css (gap 1rem, margin-top 2rem) ---- */
+.driver-only-view .driver-action-buttons-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 1rem !important;
+}
+
+/* ---- Override .driver-action-card from styles.css (padding 1.25rem, min-height 80px) ---- */
+.driver-only-view .driver-action-card {
+    padding: 0.75rem 0.85rem !important;
+    min-height: 0 !important;
+}
+
+/* ---- Override .driver-route-list from styles.css (max-height 400px, padding 1rem, bg) ---- */
+.driver-only-view .driver-route-list {
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+}
+
+/* ---- Override .driver-route-list margin from messaging-styles.css ---- */
+.driver-only-view .driver-route-list {
+    margin-top: 0 !important;
+    clear: none !important;
+}
+
+/* ---- Empty state: minimal padding so content stretches ---- */
+.driver-only-view .driver-routes-empty {
+    padding: 1.5rem 0.5rem !important;
+    text-align: center;
+}
+
+/* ---- AI suggestions inside empty state: use full width ---- */
+.driver-only-view .driver-routes-empty .driver-ai-suggestions {
+    text-align: left;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* ---- Override .driver-stat-card from styles.css (padding 1rem) ---- */
+.driver-only-view .driver-stat-card {
+    padding: 0.6rem 0.5rem !important;
+}
+
+/* ---- Override .driver-stat-value from styles.css (font-size 1.5rem, color primary) ---- */
+.driver-only-view .driver-stat-value {
+    font-size: 1.25rem !important;
+    color: white !important;
+}
+
+/* ---- Messaging system inside driver view: full-width, no min-height ---- */
+.driver-only-view .enhanced-messaging-system {
+    max-height: none !important;
+    min-height: 0 !important;
+    border-radius: 14px !important;
+    margin: 0 !important;
+}
+
+.driver-only-view .enhanced-messaging-system .messaging-content {
+    max-height: none !important;
+    padding: 0.75rem !important;
+}
+
+.driver-only-view .enhanced-messaging-system .messages-container {
+    max-height: calc(100vh - 280px) !important;
+    max-height: calc(100dvh - 280px) !important;
+    min-height: 120px !important;
+}
+
+.driver-only-view .enhanced-messaging-system .messaging-header {
+    padding: 0.875rem 1rem !important;
+}
+
+.driver-only-view .message-input-wrapper {
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+}
+
+.driver-only-view .message-tools {
+    padding: 0.5rem 0 !important;
+}
+
+.driver-only-view .quick-replies {
+    padding: 0.5rem 0 !important;
+    gap: 0.35rem !important;
+    flex-wrap: wrap !important;
+    display: flex !important;
+}
+
+.driver-only-view .quick-reply-btn {
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.6rem !important;
+    white-space: nowrap !important;
+}
+
+/* ========== DRIVER HOME PAGE – World-class component compatibility ========== */
+.driver-only-view #driverPageHome .driver-status-strip-btn {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.driver-only-view .driver-action-card {
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.driver-only-view .driver-home-routes-section,
+.driver-only-view .driver-route-list,
+.driver-only-view .driver-route-card {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+.driver-only-view .driver-route-card-title,
+.driver-only-view .driver-route-card-location,
+.driver-only-view .driver-route-card-title-meta {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+.driver-only-view .driver-full-btn {
+    min-height: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ========== DRIVER MESSAGES PAGE – World-class component compatibility ========== */
+.driver-only-view #driverPageMessages .enhanced-messaging-system {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+.driver-only-view #driverPageMessages .messaging-header,
+.driver-only-view #driverPageMessages .messaging-content,
+.driver-only-view #driverPageMessages .message-input-container {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+}
+.driver-only-view #driverPageMessages .message-input-container {
+    padding: 0.75rem !important;
+}
+.driver-only-view #driverPageMessages .emoji-btn,
+.driver-only-view #driverPageMessages .send-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.6rem !important;
+}
+.driver-only-view #driverPageMessages .tool-btn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 0.6rem 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.driver-only-view #driverPageMessages .quick-reply-btn {
+    min-height: 44px !important;
+    padding: 0.5rem 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+.driver-only-view #driverPageMessages .messages-container {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+/* Messages page: flex layout so message list fills space on all screen heights */
+.driver-only-view #driverPageMessages.driver-page .driver-mobile-container {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+.driver-only-view #driverPageMessages .enhanced-messaging-system {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.driver-only-view #driverPageMessages .enhanced-messaging-system .messaging-content {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.driver-only-view #driverPageMessages .enhanced-messaging-system .messages-container {
+    flex: 1 !important;
+    min-height: 120px !important;
+}
+
+/* ========== DRIVER MORE PAGE – World-class component compatibility ========== */
+.driver-only-view #driverPageMore .driver-more-card {
+    min-height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    text-align: left !important;
+}
+.driver-only-view #driverPageMore .driver-more-text {
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+.driver-only-view #driverPageMore .driver-more-title {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+.driver-only-view #driverPageMore .driver-more-desc {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    line-clamp: 2 !important;
+}
+.driver-only-view #driverPageMore .driver-quick-actions-inline .quick-action-btn {
+    min-height: 48px !important;
+    min-width: 0 !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+/* ---- Report Issue / Fuel modals: mobile-friendly ---- */
+.driver-only-view ~ #reportIssueModal .modal-content,
+#reportIssueModal .modal-content {
+    max-width: min(95vw, 500px) !important;
+    margin: auto !important;
+    border-radius: 16px !important;
+}
+
+#v3FuelModal > div {
+    max-width: min(95vw, 450px) !important;
+    border-radius: 16px !important;
+}
+
+/* ---- More page: full-width cards ---- */
+.driver-only-view .driver-more-menu {
+    gap: 0.625rem !important;
+}
+
+.driver-only-view .driver-more-card {
+    padding: 0.875rem 1rem !important;
+    border-radius: 14px !important;
+}
+
+.driver-only-view .driver-quick-actions-inline {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.5rem !important;
+}
+
+.driver-only-view .driver-quick-actions-inline .quick-action-btn {
+    padding: 0.75rem 0.35rem !important;
+    font-size: 0.7rem !important;
+}
+
+.driver-only-view .driver-quick-actions-inline .quick-action-btn i {
+    font-size: 1.25rem !important;
+}
+
+/* Wrapper: full viewport with padding for fixed bottom nav */
+.driver-only-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.driver-mobile-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+    max-height: -webkit-fill-available;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+}
+
+/* Pages: only active page is visible and scrollable */
+.driver-page {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    animation: driverPageFadeIn 0.25s ease;
+}
+
+/* Mobile: thin scrollbar so content feels full-width (no thick desktop scrollbar) */
+.driver-only-view .driver-page::-webkit-scrollbar {
+    width: 4px;
+}
+.driver-only-view .driver-page::-webkit-scrollbar-track {
+    background: transparent;
+}
+.driver-only-view .driver-page::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+}
+
+.driver-page.active {
+    display: block;
+}
+
+@keyframes driverPageFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Padding for driver pages (set here with !important to override the reset above) */
+.driver-only-view .driver-page .driver-mobile-container {
+    padding-left: clamp(0.875rem, 4vw, 1.5rem) !important;
+    padding-right: clamp(0.875rem, 4vw, 1.5rem) !important;
+    padding-top: max(0.75rem, env(safe-area-inset-top)) !important;
+    padding-bottom: calc(1.5rem + 88px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.driver-only-view .driver-page-content .driver-mobile-container {
+    padding-top: 1rem !important;
+}
+
+/* Page headers for non-home pages */
+.driver-page-header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-page-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.driver-page-title i {
+    color: #10b981;
+}
+
+/* Home page header with hamburger */
+.driver-mobile-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.driver-header-menu-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.driver-header-menu-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.driver-header-center {
+    flex: 1;
+    min-width: 0;
+}
+
+.driver-header-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.driver-header-subtitle {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 0.15rem;
+}
+
+.driver-header-status {
+    text-align: right;
+}
+
+.driver-status-online {
+    color: #34d399;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Compact status strip: GPS + Sync in one row */
+.driver-status-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.driver-status-strip-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 12px;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.driver-status-gps {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.driver-status-sync {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.driver-status-strip-item i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.driver-status-gps i { color: #22d3ee; }
+.driver-status-sync i { color: #34d399; }
+
+.driver-status-strip-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.driver-status-strip-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+}
+
+.driver-status-strip-value {
+    font-size: 0.75rem;
+    color: #f1f5f9;
+    word-break: normal;
+    overflow-wrap: normal;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+/* Coordinates line: ellipsis if too long; first line wraps at words only */
+.driver-status-strip-value br + span {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.driver-status-strip-btn {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.driver-sync-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: driverPulse 2s infinite;
+    flex-shrink: 0;
+}
+
+@keyframes driverPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+/* Stats grid - compact for mobile (override styles.css repeat(2,1fr)) */
+.driver-only-view .driver-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.driver-only-view .driver-stat-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.driver-only-view .driver-stat-card:active {
+    transform: scale(0.98);
+}
+
+.driver-stat-icon {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.driver-only-view .driver-stat-card .driver-stat-icon { color: #60a5fa; }
+.driver-only-view .driver-stat-card:nth-child(2) .driver-stat-icon { color: #34d399; }
+.driver-only-view .driver-stat-card:nth-child(3) .driver-stat-icon { color: #fbbf24; }
+.driver-stat-star { color: #fbbf24 !important; }
+
+.driver-only-view .driver-stat-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+
+.driver-only-view .driver-stat-label {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 0.15rem;
+}
+
+/* Action buttons grid - 2 buttons: Report Issue, Update Fuel */
+.driver-only-view .driver-action-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* ========== Assigned Routes – World-class section ========== */
+.driver-home-routes-section {
+    margin-top: 1.25rem;
+    padding: clamp(0.75rem, 3vw, 1.25rem);
+    min-height: 140px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.driver-home-routes-section .driver-section-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.driver-home-routes-section .driver-section-title i {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.2) 100%);
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.driver-routes-note {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin: 0 0 1rem 0;
+}
+
+.driver-only-view .driver-action-card {
+    padding: 0.75rem 0.85rem;
+    min-height: 0;
+}
+
+.driver-only-view .driver-action-card .action-title {
+    font-size: 0.95rem;
+}
+
+.driver-only-view .driver-action-card .action-subtitle {
+    font-size: 0.75rem;
+}
+
+/* Route list container – allow scroll; do not compress cards */
+.driver-route-list {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Override global .driver-route-list max-height so driver cards and buttons are not cut off */
+.driver-home-routes-section .driver-route-list {
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: hidden;
+}
+
+.driver-home-routes-section .driver-routes-summary {
+    flex-shrink: 0;
+}
+
+/* Empty state – more horizontal padding so Refresh button isn’t edge-to-edge */
+.driver-routes-empty {
+    text-align: center;
+    padding: 2rem clamp(1.25rem, 6vw, 2rem);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+}
+
+.driver-routes-empty-icon {
+    font-size: 2.75rem;
+    color: #475569;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.driver-routes-empty-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.driver-routes-empty-sub {
+    margin: 0.25rem 0 1rem 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.driver-routes-empty .driver-routes-refresh-btn {
+    margin-top: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    max-width: 100%;
+}
+
+/* ========== AI Suggestions (empty routes state) – World-class ========== */
+.driver-ai-suggestions {
+    margin-top: 1.25rem;
+    padding: clamp(0.75rem, 3vw, 1.25rem);
+    background: linear-gradient(145deg, rgba(99, 102, 241, 0.08) 0%, rgba(59, 130, 246, 0.06) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.driver-ai-suggestions-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.driver-ai-suggestions-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(59, 130, 246, 0.25) 100%);
+    color: #818cf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.driver-ai-suggestions-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    letter-spacing: -0.02em;
+}
+
+.driver-ai-suggestions-sub {
+    margin: 0.15rem 0 0 0;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.driver-ai-suggestion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.driver-ai-suggestion-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: clamp(0.875rem, 3vw, 1.25rem);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.driver-ai-suggestion-card:hover {
+    border-color: rgba(99, 102, 241, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.driver-ai-suggestion-info {
+    flex: 0 0 auto;
+    min-width: 0;
+    margin-bottom: 0.75rem;
+}
+
+.driver-ai-suggestion-location {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.5rem;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.driver-ai-suggestion-location i {
+    font-size: 0.8rem;
+    color: #64748b;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+
+.driver-ai-suggestion-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.driver-ai-suggestion-fill {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.driver-ai-suggestion-priority {
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.driver-ai-suggestion-priority--high {
+    background: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+}
+
+.driver-ai-suggestion-priority--medium {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fcd34d;
+}
+
+.driver-ai-suggestion-priority--low {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+
+.driver-ai-suggestion-distance {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.driver-ai-suggestion-distance i {
+    color: #475569;
+    font-size: 0.75rem;
+}
+
+.driver-ai-suggestion-cta {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    padding-top: 0.75rem;
+    padding-left: 0;
+    padding-right: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.driver-ai-suggestion-cta .btn {
+    padding: 0.5rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.driver-ai-suggestion-cta .btn:active {
+    transform: scale(0.97);
+}
+
+.driver-ai-suggestion-cta .btn:hover {
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
+}
+
+/* Routes summary strip (active count + completed today) */
+.driver-routes-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 14px;
+    margin-bottom: 1rem;
+}
+
+.driver-routes-summary-title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.driver-routes-summary-meta {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+/* Single route card – do not clip content; do not shrink in flex list */
+.driver-route-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: clamp(0.875rem, 3vw, 1.1rem);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.driver-route-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    opacity: 0.6;
+}
+
+.driver-route-card:active {
+    transform: scale(0.99);
+}
+
+.driver-route-card:hover {
+    border-color: rgba(16, 185, 129, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.driver-route-card--urgent::before {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+    opacity: 1;
+}
+
+.driver-route-card--urgent {
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.driver-route-card-priority {
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.driver-route-card-priority--high {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+}
+
+.driver-route-card-priority--medium {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+}
+
+.driver-route-card-priority--low {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+}
+
+.driver-route-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.driver-route-card-header-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.driver-route-card-fill-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.driver-route-card-title {
+    margin: 0;
+    font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.01em;
+    word-break: break-word;
+}
+
+.driver-route-card-title-meta {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.driver-route-card-location {
+    color: #94a3b8;
+    font-size: clamp(0.8rem, 2vw, 0.875rem);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    word-break: break-word;
+    min-width: 0;
+}
+
+.driver-route-card-fill {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.driver-route-card-fill-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.driver-route-card-fill-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.driver-route-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.driver-route-card-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.driver-route-card-badge--status {
+    background: rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+}
+
+.driver-route-card-badge--pending {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fcd34d;
+}
+
+.driver-route-card-extras {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.driver-route-card-extras-label {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-bottom: 0.4rem;
+}
+
+.driver-route-card-bins-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.driver-route-card-bin-chip {
+    background: rgba(0, 0, 0, 0.25);
+    color: #e2e8f0;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.driver-route-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    min-height: 52px;
+}
+
+.driver-route-card-stat {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 0.6rem;
+    border-radius: 10px;
+}
+
+.driver-route-card-stat-label {
+    color: #64748b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.driver-route-card-stat-value {
+    color: #f1f5f9;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+    min-height: 1.25em;
+    word-break: break-word;
+}
+
+.driver-route-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    min-height: 44px;
+}
+
+.driver-route-card-actions .btn {
+    flex: 1 1 auto;
+    min-width: min(100px, 35vw);
+    min-height: 44px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: clamp(0.8rem, 2vw, 0.85rem);
+    padding: 0.6rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.driver-route-card-actions .btn.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+}
+
+.driver-route-card-actions .btn.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+}
+
+.driver-route-card-actions .btn.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+}
+
+/* Open map CTA */
+.driver-full-btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.driver-full-btn:active {
+    transform: scale(0.98);
+}
+
+.driver-full-btn:hover {
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+}
+
+/* AI page placeholder when v3SmartCollectionPanel is used */
+.driver-ai-panel-placeholder {
+    min-height: 80px;
+}
+
+/* Messages full page - expand to fill */
+.enhanced-messaging-fullpage .messaging-content {
+    max-height: none;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.enhanced-messaging-fullpage .messages-container {
+    flex: 1;
+    min-height: 200px;
+}
+
+/* More page - menu cards */
+.driver-more-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.driver-more-section-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: 1rem;
+    margin-top: 1.5rem;
+}
+
+.driver-more-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1.25rem 1rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: #f1f5f9;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.driver-more-card:active {
+    transform: scale(0.99);
+}
+
+.driver-more-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.driver-more-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.driver-more-icon-secondary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.driver-more-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+}
+
+.driver-more-title {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.driver-more-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.driver-more-arrow {
+    color: #64748b;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+/* Quick actions inline (More page) */
+.driver-quick-actions-inline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.driver-quick-actions-inline .quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.driver-quick-actions-inline .quick-action-btn i {
+    font-size: 1.5rem;
+    color: #10b981;
+}
+
+.driver-quick-actions-inline .quick-action-btn:active {
+    transform: scale(0.96);
+}
+
+/* ========== BOTTOM NAVIGATION ========== */
+.driver-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(15, 23, 42, 0.98);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 10px;
+    z-index: 1001;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide Routes from driver nav (routes are on Home page) */
+#driverBottomNav .driver-nav-item[data-page="routes"],
+#driverDrawer .driver-drawer-item[data-page="routes"] {
+    display: none !important;
+}
+
+/* Hide AI page from driver nav (avoids confusion) */
+#driverBottomNav .driver-nav-item[data-page="ai"],
+#driverDrawer .driver-drawer-item[data-page="ai"] {
+    display: none !important;
+}
+
+.driver-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    max-width: 80px;
+    min-height: 48px; /* WCAG touch target */
+    padding: 10px 4px;
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    position: relative;
+}
+
+.driver-nav-item .driver-nav-icon {
+    flex-shrink: 0;
+}
+
+.driver-nav-item:active {
+    transform: scale(0.92);
+}
+
+.driver-nav-item.active {
+    color: #10b981;
+}
+
+.driver-nav-item.active .driver-nav-icon {
+    color: #10b981;
+    transform: scale(1.05);
+}
+
+.driver-nav-icon {
+    font-size: 1.35rem;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.driver-nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.driver-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 50%;
+    transform: translate(50%, 0);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Left drawer menu */
+.driver-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s, visibility 0.25s;
+}
+
+.driver-drawer-overlay.driver-drawer-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.driver-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 85vw);
+    height: 100%;
+    height: 100dvh;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 1101;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+}
+
+.driver-drawer.driver-drawer-open {
+    transform: translateX(0);
+}
+
+.driver-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-drawer-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.driver-drawer-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.driver-drawer-close:active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.driver-drawer-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+}
+
+.driver-drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    min-height: 48px; /* WCAG touch target */
+    padding: 1rem 1.25rem;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+}
+
+.driver-drawer-item i {
+    font-size: 1.25rem;
+    width: 28px;
+    text-align: center;
+    color: #64748b;
+}
+
+.driver-drawer-item:hover,
+.driver-drawer-item:active {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f1f5f9;
+}
+
+.driver-drawer-item.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+.driver-drawer-item.active i {
+    color: #34d399;
+}
+
+.driver-drawer-badge {
+    margin-left: auto;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Prevent body scroll and horizontal overflow when driver view is active */
+body.driver-view-active {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
+/* User info badge (Logout) when driver view is active: compact so it doesn't overlap */
+body.driver-view-active .user-info-badge {
+    top: max(0.5rem, env(safe-area-inset-top));
+    right: 0.5rem;
+    left: auto;
+    max-width: calc(100vw - 6rem);
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+}
+
+body.driver-view-active .user-info-badge .user-name,
+body.driver-view-active .user-info-badge .user-role {
+    font-size: 0.75rem;
+}
+
+body.driver-view-active .user-info-badge .logout-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+body.driver-view-active .user-info-badge .user-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+}
+
+@media (max-width: 380px) {
+    body.driver-view-active .user-info-badge .user-details {
+        display: none;
+    }
+}
+
+/* Ensure driver view never overflows horizontally */
+.driver-only-view,
+.driver-mobile-wrapper,
+.driver-page,
+.driver-mobile-container {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+.driver-mobile-container {
+    box-sizing: border-box;
+}
+
+/* ========== COLLECTION HISTORY & MODALS – Full width, organized, world-class mobile ========== */
+/* Driver History Modal – mobile-first overrides */
+@media (max-width: 768px) {
+    #driverHistoryModal.modal,
+    .driver-history-modal.modal {
+        padding: 0 !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+    }
+    #driverHistoryModal .modal-content,
+    #driverHistoryModal .driver-history-modal-content {
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        padding: 0 !important;
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+    #driverHistoryModal .driver-history-modal-body,
+    #driverHistoryModal .modal-content > div[style*="padding"] {
+        padding: 1rem !important;
+        padding-left: max(1rem, env(safe-area-inset-left)) !important;
+        padding-right: max(1rem, env(safe-area-inset-right)) !important;
+        padding-bottom: max(2rem, env(safe-area-inset-bottom) + 1rem) !important;
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+    }
+    /* Header: larger close, wrap title */
+    #driverHistoryModal .driver-history-modal-header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 0.5rem !important;
+        padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left)) !important;
+        min-height: 56px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    #driverHistoryModal .driver-history-modal-title {
+        font-size: 1.1rem !important;
+        line-height: 1.3 !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        word-break: break-word !important;
+    }
+    #driverHistoryModal .driver-history-close {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.75rem !important;
+        flex-shrink: 0 !important;
+        cursor: pointer !important;
+    }
+    /* Stats header (populated by JS): stack and full width */
+    #driverHistoryModal #driverHistoryHeader,
+    #driverHistoryModal .driver-history-header {
+        max-width: 100% !important;
+        margin-bottom: 1rem !important;
+        overflow: hidden !important;
+    }
+    #driverHistoryModal #driverHistoryHeader > div,
+    #driverHistoryModal .driver-history-header > div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #driverHistoryModal #driverHistoryHeader [style*="display: flex"] {
+        flex-wrap: wrap !important;
+    }
+    #driverHistoryModal #driverHistoryHeader [style*="grid-template-columns"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+    }
+    #driverHistoryModal #driverHistoryHeader button {
+        width: 100% !important;
+        min-height: 44px !important;
+    }
+    /* Section titles */
+    #driverHistoryModal .driver-history-section-title {
+        font-size: 1rem !important;
+    }
+    #driverHistoryModal .driver-history-section {
+        margin-bottom: 1.25rem !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    /* Timeline & route list items – single column, horizontal text only */
+    #driverHistoryModal .driver-collection-timeline,
+    #driverHistoryModal .driver-route-history {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    #driverHistoryModal .driver-timeline-item,
+    #driverHistoryModal .driver-route-item {
+        display: block !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 1rem !important;
+        margin-bottom: 0.75rem !important;
+        box-sizing: border-box !important;
+        writing-mode: horizontal-tb !important;
+        direction: ltr !important;
+    }
+    #driverHistoryModal .driver-timeline-location,
+    #driverHistoryModal .driver-timeline-meta,
+    #driverHistoryModal .driver-timeline-stats,
+    #driverHistoryModal .driver-route-name,
+    #driverHistoryModal .driver-route-meta,
+    #driverHistoryModal .driver-route-stats {
+        width: 100% !important;
+        max-width: 100% !important;
+        writing-mode: horizontal-tb !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    #driverHistoryModal .driver-timeline-stats,
+    #driverHistoryModal .driver-route-stats {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.75rem 1rem !important;
+    }
+    #driverHistoryModal .collection-card,
+    #driverHistoryModal .history-day-group {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    #driverHistoryModal .collection-card {
+        padding: 1rem !important;
+    }
+    #driverHistoryModal .collection-card [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+    #driverHistoryModal .collection-card [style*="display: grid"] {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    /* Chart */
+    #driverHistoryModal .driver-history-chart-wrap {
+        max-width: 100% !important;
+    }
+    #driverHistoryModal .driver-history-chart-container {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #driverHistoryModal #driverPerformanceChart {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    /* Trip history list (driver details / dashboard) */
+    .driver-trips-history {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-radius: 12px !important;
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .driver-trips-history::-webkit-scrollbar {
+        width: 4px;
+    }
+    .driver-trips-history::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.4);
+        border-radius: 4px;
+    }
+    .trip-item {
+        flex-wrap: wrap !important;
+        gap: 0.75rem !important;
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    .trip-info h5,
+    .trip-info p {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+@media (max-width: 480px) {
+    #driverHistoryModal #driverHistoryHeader [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* When driver view is active, any open modal should also be full width */
+body.driver-view-active #driverHistoryModal .modal-content,
+body.driver-view-active #driverHistoryModal .driver-history-modal-content {
+    width: 100% !important;
+    max-width: 100vw !important;
+}
+
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS – World-class mobile compatibility
+   ========================================================================== */
+
+/* Stack GPS + Sync on narrow screens */
+@media (max-width: 420px) {
+    .driver-status-strip {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .driver-only-view .driver-page .driver-mobile-container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .driver-mobile-header { gap: 0.5rem; }
+    .driver-header-title { font-size: 1rem; }
+    .driver-header-subtitle { font-size: 0.75rem; }
+    .driver-status-strip-value { font-size: 0.7rem; }
+    .driver-status-strip-item { padding: 0.5rem 0.6rem; }
+
+    .driver-only-view .driver-action-buttons-grid { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
+    .driver-only-view .driver-action-card { padding: 0.6rem !important; }
+    .driver-only-view .driver-action-card .action-title { font-size: 0.85rem !important; }
+
+    .driver-only-view .driver-stats-grid { gap: 0.35rem !important; }
+    .driver-only-view .driver-stat-card { padding: 0.5rem 0.35rem !important; }
+    .driver-only-view .driver-stat-value { font-size: 1.1rem !important; }
+    .driver-only-view .driver-stat-label { font-size: 0.55rem !important; }
+
+    .driver-home-routes-section { padding: 0.75rem !important; min-height: auto !important; border-radius: 14px !important; }
+    .driver-routes-empty { padding: 1.25rem 0.5rem !important; }
+    .driver-ai-suggestions { padding: 0.625rem !important; margin-top: 1rem !important; border-radius: 12px !important; }
+    .driver-ai-suggestion-card { padding: 0.75rem !important; }
+
+    .driver-route-card-header { gap: 0.5rem; }
+    .driver-route-card-header-main { flex: 1 1 100%; }
+    .driver-route-card-fill-wrap { flex-direction: row; align-items: center; gap: 0.5rem; }
+    .driver-route-card-stats { grid-template-columns: repeat(3, 1fr) !important; gap: 0.35rem !important; min-height: auto !important; }
+    .driver-route-card-stat-value { font-size: 0.75rem; }
+    .driver-route-card-actions .btn { min-width: 0; flex: 1 1 40%; min-height: 44px; }
+    .driver-full-btn { padding: 0.875rem 1rem; font-size: 0.9rem; }
+
+    .driver-ai-suggestion-card { flex-wrap: wrap; gap: 0.6rem; }
+    .driver-ai-suggestion-info { min-width: 0; flex: 1 1 100%; }
+    .driver-ai-suggestion-location { font-size: 0.9rem; word-break: break-word; }
+    .driver-ai-suggestion-cta { display: flex; flex-wrap: wrap; gap: 0.5rem; width: 100%; }
+    .driver-ai-suggestion-cta .btn { flex: 1 1 auto; min-width: 0; }
+    .driver-ai-suggestion-distance { font-size: 0.75rem; }
+
+    /* More page: 2-column quick actions on narrow screens */
+    .driver-only-view .driver-quick-actions-inline { grid-template-columns: repeat(2, 1fr) !important; }
+
+    /* Messages page: tighter layout + touch targets */
+    .driver-only-view .enhanced-messaging-system { border-radius: 12px !important; }
+    .driver-only-view .enhanced-messaging-system .messaging-header { padding: 0.75rem !important; }
+    .driver-only-view .enhanced-messaging-system .messaging-content { padding: 0.5rem !important; }
+    .driver-only-view #driverPageMessages .message-input-container { padding: 0.6rem !important; }
+    .driver-only-view #driverPageMessages .messages-container { max-height: calc(100dvh - 260px) !important; }
+}
+
+/* iOS: prevent zoom on input focus (16px minimum font-size) */
+.driver-only-view #driverMessageInput,
+.driver-only-view .message-input-container input,
+.driver-only-view .enhanced-messaging-system input[type="text"] {
+    font-size: max(16px, 1rem) !important;
+}
+
+@media (max-width: 360px) {
+    .driver-only-view .driver-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .driver-status-strip { grid-template-columns: 1fr; }
+    .driver-only-view .driver-action-buttons-grid { grid-template-columns: 1fr; }
+    /* Messages: quick replies wrap on very narrow */
+    .driver-only-view #driverPageMessages .quick-replies { gap: 0.5rem !important; }
+    .driver-only-view #driverPageMessages .quick-reply-btn { white-space: normal !important; text-align: center !important; min-height: 44px !important; padding: 0.5rem 0.65rem !important; font-size: 0.7rem !important; }
+    .driver-only-view #driverPageMessages .message-tools { flex-wrap: wrap !important; justify-content: flex-start !important; }
+}
+
+@media (max-width: 340px) {
+    .driver-only-view .driver-page .driver-mobile-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    .driver-header-title { font-size: 0.95rem; }
+    .driver-only-view .driver-stat-value { font-size: 1rem !important; }
+    .driver-only-view .driver-action-card .action-title { font-size: 0.8rem !important; }
+    .driver-only-view .driver-action-buttons-grid { grid-template-columns: 1fr !important; }
+    .driver-home-routes-section { padding: 0.5rem !important; }
+    .driver-ai-suggestions { padding: 0.5rem !important; }
+    .driver-only-view .driver-quick-actions-inline { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* Very small phones (320px–350px) – world-class compatibility */
+@media (max-width: 350px) {
+    .driver-nav-label { font-size: 0.6rem; }
+    .driver-nav-icon { font-size: 1.2rem; }
+    .driver-bottom-nav { height: calc(60px + env(safe-area-inset-bottom, 0px)); padding-top: 8px; }
+    .driver-only-view .driver-page .driver-mobile-container { padding-bottom: calc(1rem + 70px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+
+@media (max-width: 320px) {
+    .driver-only-view .driver-page .driver-mobile-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; padding-bottom: calc(0.75rem + 64px + env(safe-area-inset-bottom, 0px)) !important; }
+    .driver-header-title { font-size: 0.9rem; }
+    .driver-header-subtitle { font-size: 0.7rem; }
+    .driver-only-view .driver-stat-value { font-size: 0.95rem !important; }
+    .driver-only-view .driver-stat-label { font-size: 0.5rem !important; }
+    .driver-only-view .driver-action-card .action-title { font-size: 0.75rem !important; }
+    .driver-only-view .driver-action-card .action-subtitle { font-size: 0.65rem !important; }
+    .driver-home-routes-section .driver-section-title { font-size: 1rem; }
+    .driver-route-card-title { font-size: 0.9rem; }
+    .driver-route-card-actions .btn { font-size: 0.75rem; padding: 0.5rem 0.6rem; min-height: 44px; }
+    .driver-full-btn { font-size: 0.85rem; padding: 0.75rem 1rem; min-height: 48px; }
+    .driver-more-title { font-size: 0.9rem; }
+    .driver-more-desc { font-size: 0.75rem; }
+    .driver-drawer { width: min(260px, 90vw); }
+    /* Messages: compact input + container height for small screens */
+    .driver-only-view #driverPageMessages .enhanced-messaging-system .messaging-header { padding: 0.6rem 0.75rem !important; }
+    .driver-only-view #driverPageMessages .messaging-content { padding: 0.5rem !important; }
+    .driver-only-view #driverPageMessages .message-input-container { padding: 0.5rem !important; }
+    .driver-only-view #driverPageMessages .messages-container { max-height: calc(100dvh - 240px) !important; min-height: 100px !important; }
+    .driver-only-view #driverPageMessages .quick-reply-btn { font-size: 0.65rem !important; padding: 0.4rem 0.5rem !important; }
+}
+
+/* FAB position in driver view */
+.driver-only-view .fab-container,
+.driver-only-view .fab {
+    right: max(1rem, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(5rem, calc(72px + env(safe-area-inset-bottom, 0px) + 0.5rem)) !important;
+}
+
+/* Desktop: center the driver view like a phone preview */
+@media (min-width: 768px) {
+    .driver-mobile-wrapper {
+        max-width: 480px;
+        margin: 0 auto;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .driver-bottom-nav {
+        max-width: 480px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 20px 20px 0 0;
+    }
+}

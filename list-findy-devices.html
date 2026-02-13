@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Findy Devices</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 2rem;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .device-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .device-item {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .device-imei {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+        
+        .device-info {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        .copy-btn {
+            background: #10b981;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        
+        .copy-btn:hover {
+            background: #059669;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+        
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        
+        .mapping-example {
+            background: #f0fdf4;
+            border: 2px solid #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛰️ Findy IoT Devices List</h1>
+        
+        <div class="card">
+            <h2>Your Findy Sensors</h2>
+            <div id="status" class="status info">
+                Click the button below to load all your sensors from Findy IoT.
+            </div>
+            
+            <button onclick="listAllDevices()">
+                <i class="fas fa-sync"></i> Load All Devices
+            </button>
+            
+            <button onclick="showMappingExample()" style="background: #f59e0b;">
+                <i class="fas fa-code"></i> Show Mapping Example
+            </button>
+            
+            <div id="results" style="margin-top: 2rem;"></div>
+        </div>
+        
+        <div class="card" id="bins-section" style="display: none;">
+            <h2>Your Bins</h2>
+            <div id="bins-list"></div>
+        </div>
+        
+        <div class="card" id="mapping-section" style="display: none;">
+            <h2>📋 Ready-to-Use Configuration</h2>
+            <p style="margin-bottom: 1rem; color: #64748b;">
+                Copy this code to your <code>findy-bin-sensor-config.js</code> file:
+            </p>
+            <pre id="mapping-code"></pre>
+            <button onclick="copyMappingCode()">
+                <i class="fas fa-copy"></i> Copy Configuration
+            </button>
+        </div>
+    </div>
+    
+    <script src="findy-client.js"></script>
+    <script>
+        let devices = [];
+        let bins = [];
+        
+        async function listAllDevices() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.className = 'status info';
+            statusDiv.innerHTML = '🔄 Loading devices from Findy IoT...';
+            resultsDiv.innerHTML = '<div class="loading">Please wait...</div>';
+            
+            try {
+                // Check authentication
+                const health = await findyClient.healthCheck();
+                if (!health.authenticated) {
+                    throw new Error('Not authenticated. Please check server logs.');
+                }
+                
+                // Try to search with a wildcard that matches everything
+                // We'll try searching with partial IMEI or just get devices by common criteria
+                let result;
+                
+                // Try method 1: Search with partial common IMEI prefix
+                try {
+                    result = await findyClient.searchDevices({ imei: '86' });
+                } catch (e) {
+                    // Try method 2: Search by device version
+                    try {
+                        result = await findyClient.searchDevices({ deviceVersionID: 1 });
+                    } catch (e2) {
+                        // Method 3: Use a date range to get all recent devices
+                        const now = new Date();
+                        const pastDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); // 1 year ago
+                        result = await findyClient.searchDevices({
+                            lastReport: {
+                                date: findyClient.formatDate(pastDate),
+                                operator: '>'
+                            }
+                        });
+                    }
+                }
+                
+                if (result.success && result.data) {
+                    devices = Array.isArray(result.data) ? result.data : [result.data];
+                    
+                    if (devices.length === 0) {
+                        statusDiv.className = 'status info';
+                        statusDiv.innerHTML = '📋 No devices found. Try logging into the Findy portal to check your devices.';
+                        resultsDiv.innerHTML = '';
+                        return;
+                    }
+                    
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `✅ Found ${devices.length} device(s)!`;
+                    
+                    displayDevices(devices);
+                    loadBins();
+                } else {
+                    throw new Error('No devices found');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Error: ${error.message}<br><br>
+                    <strong>Alternative:</strong> Login to <a href="https://higps.org/new_test/" target="_blank" style="color: #3b82f6;">https://higps.org/new_test/</a> 
+                    to see your devices and copy their IMEI numbers manually.`;
+                resultsDiv.innerHTML = '';
+            }
+        }
+        
+        function displayDevices(devices) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '<div class="device-list">';
+            
+            devices.forEach((device, index) => {
+                const imei = device.imei || device.deviceID || device.id || 'Unknown';
+                const name = device.name || device.deviceName || `Device ${index + 1}`;
+                const battery = device.battery || device.batteryLevel || 'N/A';
+                const status = device.status || device.deviceStatus || 'Unknown';
+                
+                html += `
+                    <div class="device-item">
+                        <div class="device-imei">
+                            📱 IMEI: ${imei}
+                        </div>
+                        <div class="device-info">
+                            <strong>Name:</strong> ${name} | 
+                            <strong>Battery:</strong> ${battery}${typeof battery === 'number' ? '%' : ''} | 
+                            <strong>Status:</strong> ${status}
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('${imei}')">
+                            📋 Copy IMEI
+                        </button>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+        
+        function loadBins() {
+            if (typeof dataManager === 'undefined') return;
+            
+            bins = dataManager.getBins();
+            if (!bins || bins.length === 0) return;
+            
+            const binsSection = document.getElementById('bins-section');
+            const binsList = document.getElementById('bins-list');
+            
+            binsSection.style.display = 'block';
+            
+            let html = '<div class="device-list">';
+            bins.forEach(bin => {
+                html += `
+                    <div class="device-item" style="border-left-color: #10b981;">
+                        <div class="device-imei" style="color: #059669;">
+                            🗑️ ${bin.name || bin.id}
+                        </div>
+                        <div class="device-info">
+                            <strong>ID:</strong> ${bin.id} | 
+                            <strong>Type:</strong> ${bin.type || 'N/A'} | 
+                            <strong>Fill:</strong> ${bin.fillLevel || 0}%
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('${bin.id}')">
+                            📋 Copy Bin ID
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            binsList.innerHTML = html;
+            
+            // Show mapping section
+            generateMappingCode();
+        }
+        
+        function generateMappingCode() {
+            if (devices.length === 0 || bins.length === 0) return;
+            
+            const mappingSection = document.getElementById('mapping-section');
+            const mappingCode = document.getElementById('mapping-code');
+            
+            mappingSection.style.display = 'block';
+            
+            let code = `const findyBinSensorConfig = {
+    binMappings: {\n`;
+            
+            // Map first devices to bins
+            const maxMappings = Math.min(devices.length, bins.length);
+            for (let i = 0; i < maxMappings; i++) {
+                const bin = bins[i];
+                const device = devices[i];
+                const imei = device.imei || device.deviceID || device.id;
+                code += `        '${bin.id}': '${imei}',  // ${bin.name || 'Bin ' + (i+1)}\n`;
+            }
+            
+            // If more bins than devices, show placeholders
+            if (bins.length > devices.length) {
+                for (let i = devices.length; i < bins.length; i++) {
+                    const bin = bins[i];
+                    code += `        // '${bin.id}': 'YOUR_SENSOR_IMEI',  // ${bin.name || 'Bin ' + (i+1)}\n`;
+                }
+            }
+            
+            code += `    },
+    autoStartTracking: true,
+    syncBinLocation: true
+};
+
+if (typeof window !== 'undefined') {
+    window.findyBinSensorConfig = findyBinSensorConfig;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = findyBinSensorConfig;
+}`;
+            
+            mappingCode.textContent = code;
+        }
+        
+        function showMappingExample() {
+            alert(`Example Configuration:
+
+const findyBinSensorConfig = {
+    binMappings: {
+        'BIN-001': '868324050000000',
+        'BIN-002': '868324050000001',
+        'BIN-003': '868324050000002',
+    },
+    autoStartTracking: true,
+    syncBinLocation: true
+};
+
+1. Get sensor IMEIs from Findy portal or this tool
+2. Get bin IDs from your system
+3. Map them together in findy-bin-sensor-config.js
+4. Restart server
+5. Bins appear on map! 🗺️`);
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Copied: ' + text);
+            });
+        }
+        
+        function copyMappingCode() {
+            const code = document.getElementById('mapping-code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Configuration copied! Paste it into findy-bin-sensor-config.js');
+            });
+        }
+        
+        // Auto-load on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                console.log('Ready to load devices');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
+
+

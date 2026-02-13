@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Management - Findy IoT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="sensor-management-worldclass.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header h1 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #64748b;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #64748b;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .back-btn:hover {
+            background: #475569;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-card.green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .stat-card.red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .stat-card.blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-info {
+            background: #0ea5e9;
+            color: white;
+        }
+        
+        .btn-mini {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            margin-right: 0.25rem;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            color: #1e40af;
+        }
+        
+        .close {
+            font-size: 2rem;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        
+        .close:hover {
+            color: #64748b;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+        
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tab-button:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .bin-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .bin-status-badge.has-sensor {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .bin-status-badge.no-sensor {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">
+            ← Back to Main App
+        </a>
+        
+        <div class="header">
+            <h1><i class="fas fa-satellite-dish"></i> Sensor Management</h1>
+            <p>Manage your Findy IoT sensors and link them to bins</p>
+            <div class="api-status-box">
+                <div>
+                    <strong>Findy API Status:</strong>
+                    <span id="findyAPIStatus" class="api-status-indicator">
+                        <i class="fas fa-spinner fa-spin"></i> Checking...
+                    </span>
+                </div>
+                <a href="https://higps.org/new_test/" target="_blank" rel="noopener" style="color: #60a5fa; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-external-link-alt"></i> Findy Portal
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-satellite-dish"></i></div>
+                <div class="stat-value" id="totalSensors">0</div>
+                <div class="stat-label">Total Sensors</div>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.7;">Registered</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-value" id="onlineSensors">0</div>
+                <div class="stat-label">Online</div>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.7;">Connected</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-value" id="offlineSensors">0</div>
+                <div class="stat-label">Offline</div>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.7;">Disconnected</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-icon"><i class="fas fa-link"></i></div>
+                <div class="stat-value" id="linkedSensors">0</div>
+                <div class="stat-label">Linked to Bins</div>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.7;">Active Monitoring</div>
+            </div>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="card">
+            <div class="tab-navigation">
+                <button class="tab-button active" onclick="switchTab('sensors')">
+                    <i class="fas fa-satellite-dish"></i> Sensors
+                </button>
+                <button class="tab-button" onclick="switchTab('bins')">
+                    <i class="fas fa-trash-alt"></i> Bins
+                </button>
+            </div>
+            
+            <!-- Sensors Tab -->
+            <div id="sensorsTab" class="tab-content active">
+                <div class="actions-container">
+                    <button class="btn btn-primary" onclick="sensorManagementAdmin.showAddSensorDialog()">
+                        <i class="fas fa-plus-circle"></i> Add Sensor
+                    </button>
+                    <button class="btn btn-success" onclick="sensorManagementAdmin.showBulkImportDialog()">
+                        <i class="fas fa-file-import"></i> Bulk Import
+                    </button>
+                    <button class="btn btn-info" onclick="refreshAllSensors()">
+                        <i class="fas fa-sync-alt"></i> Refresh Status
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportSensorData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+                
+                <h3><i class="fas fa-list"></i> Registered Sensors</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Sensor Name / IMEI</th>
+                            <th>Status</th>
+                            <th>Linked Bin</th>
+                            <th>Battery</th>
+                            <th>Operator</th>
+                            <th>Last Seen</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensorTableBody">
+                        <tr>
+                            <td colspan="8" class="loading">
+                                Loading sensors...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+            
+            <!-- Bins Tab -->
+            <div id="binsTab" class="tab-content">
+                <div class="actions-container">
+                    <button class="btn btn-info" onclick="refreshBinsList()">
+                        <i class="fas fa-sync-alt"></i> Refresh Bins
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportBinsData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+                
+                <h3><i class="fas fa-list"></i> All Bins</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">#</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Bin ID / Location</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Coordinates</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Fill Level</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Type</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Sensor Status</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Linked Sensor</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Capacity</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="binTableBody">
+                            <tr>
+                                <td colspan="8" class="loading">
+                                    Loading bins...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Sensor Modal -->
+    <div id="addSensorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Sensor</h2>
+                <span class="close" onclick="document.getElementById('addSensorModal').style.display='none'">&times;</span>
+            </div>
+            <div style="padding: 2rem;">
+                <div class="form-group">
+                    <label>Sensor IMEI *</label>
+                    <input type="text" id="sensorIMEI" placeholder="Enter sensor IMEI (e.g., 868324050000000)">
+                </div>
+                <div class="form-group">
+                    <label>Sensor Name (Optional)</label>
+                    <input type="text" id="sensorName" placeholder="e.g., Main Street Sensor">
+                </div>
+                <div class="form-group">
+                    <label>Link to Bin (Optional)</label>
+                    <select id="sensorBinId">
+                        <option value="">-- Link Later --</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('addSensorModal').style.display='none'">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="addSensorNow()">
+                        Add Sensor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Import Modal -->
+    <div id="bulkImportModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Bulk Import Sensors</h2>
+                <span class="close" onclick="document.getElementById('bulkImportModal').style.display='none'">&times;</span>
+            </div>
+            <div style="padding: 2rem;">
+                <p style="margin-bottom: 1rem; color: #64748b;">
+                    Paste sensor data (one per line). Formats:
+                </p>
+                <ul style="margin-bottom: 1rem; color: #64748b; padding-left: 2rem;">
+                    <li><code>IMEI</code></li>
+                    <li><code>IMEI,BIN-ID</code></li>
+                    <li><code>IMEI,BIN-ID,Name</code></li>
+                </ul>
+                <div class="form-group">
+                    <textarea id="bulkImportData" rows="15" placeholder="868324050000000
+868324050000001,BIN-001
+868324050000002,BIN-002,Sensor A" style="font-family: monospace;"></textarea>
+                </div>
+                <div id="bulkImportProgress" style="margin-bottom: 1rem; color: #64748b;"></div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('bulkImportModal').style.display='none'">
+                        Cancel
+                    </button>
+                    <button class="btn btn-success" onclick="bulkImportNow()">
+                        📥 Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Link Sensor Modal -->
+    <div id="linkSensorModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Link Sensor to Bin</h2>
+                <span class="close" onclick="document.getElementById('linkSensorModal').style.display='none'">&times;</span>
+            </div>
+            <div style="padding: 2rem;">
+                <input type="hidden" id="linkSensorIMEI">
+                <div class="form-group">
+                    <label>Select Bin</label>
+                    <select id="linkBinId"></select>
+                </div>
+                
+                <!-- Create New Bin Form (hidden by default) -->
+                <div id="createBinForm" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 4px solid #10b981;">
+                    <h3 style="margin-bottom: 1rem; color: #10b981; font-size: 1.1rem;">
+                        ➕ Create New Bin
+                    </h3>
+                    <div class="form-group">
+                        <label>Bin ID (Auto-generated)</label>
+                        <input type="text" id="newBinId" placeholder="BIN-011" readonly style="background: rgba(255,255,255,0.5);">
+                    </div>
+                    <div class="form-group">
+                        <label>Location Name *</label>
+                        <input type="text" id="newBinLocation" placeholder="e.g., Al Sadd, West Bay, etc." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Coordinates (Auto-filled from sensor GPS) *</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <input type="number" id="newBinLat" step="0.000001" placeholder="Loading GPS..." style="transition: background 0.3s;" required>
+                            <input type="number" id="newBinLng" step="0.000001" placeholder="Loading GPS..." style="transition: background 0.3s;" required>
+                        </div>
+                        <small id="coordinatesStatus" style="color: #64748b; font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                            <i class="fas fa-spinner fa-spin"></i> Fetching sensor GPS coordinates...
+                        </small>
+                        <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 0.25rem;">
+                            <i class="fas fa-info-circle"></i> Coordinates will automatically match sensor GPS. You can edit them if needed.
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>Bin Type</label>
+                        <select id="newBinType">
+                            <option value="general">General Waste</option>
+                            <option value="recyclable">Recyclable</option>
+                            <option value="organic">Organic</option>
+                            <option value="glass">Glass</option>
+                            <option value="metal">Metal</option>
+                            <option value="paper">Paper</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Capacity (Liters)</label>
+                        <input type="number" id="newBinCapacity" value="100" min="50" max="1000" step="10">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('linkSensorModal').style.display='none'">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" id="linkButton" onclick="linkSensorNow()">
+                        Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Wake-up Recovery System - Must load early -->
+    <script src="wake-up-recovery.js"></script>
+    
+    <script src="data-manager.js"></script>
+    <script src="data-integrity-manager.js"></script>
+    <script src="auth.js"></script>
+    <script src="sync-manager.js"></script>
+    <script src="findy-client.js"></script>
+    <script src="sensor-date-formatter.js"></script>
+    <script src="sensor-status-manager.js"></script>
+    <script src="realtime-status-notifier.js"></script>
+    <script src="connection-status-indicator.js"></script>
+    <script src="findy-bin-sensor-integration.js"></script>
+    <script src="sensor-management-admin.js"></script>
+    <script src="sensor-integration-enhanced.js"></script>
+    <script src="number-formatter.js"></script>
+    <script src="persistent-ui-fix.js"></script>
+    <script src="deleted-bins-filter.js"></script>
+    <script src="realtime-update-broadcaster.js"></script>
+    <script src="ai-ml-master-integration.js"></script>
+    <script src="verify-ai-connections.js"></script>
+    <script>
+        // Tab Management
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.tab-button').classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (tabName === 'sensors') {
+                document.getElementById('sensorsTab').classList.add('active');
+            } else if (tabName === 'bins') {
+                document.getElementById('binsTab').classList.add('active');
+                refreshBinsList(); // Load bins when tab is opened
+            }
+        }
+        
+        // Refresh bins list
+        async function refreshBinsList() {
+            try {
+                console.log('🔄 Refreshing bins list...');
+                
+                const tbody = document.getElementById('binTableBody');
+                if (!tbody) return;
+                
+                // Show loading state
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2rem; color: #667eea;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading bins...
+                        </td>
+                    </tr>
+                `;
+                
+                // Get bins from dataManager
+                // dataManager is already initialized globally in data-manager.js
+                if (typeof dataManager === 'undefined') {
+                    console.error('❌ dataManager not available');
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 2rem; color: #ef4444;">
+                                <i class="fas fa-exclamation-triangle"></i> dataManager not loaded<br>
+                                <small>Make sure data-manager.js is loaded before this page</small><br>
+                                <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                                    <i class="fas fa-sync-alt"></i> Reload Page
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                const bins = dataManager.getBins();
+                
+                if (!bins || bins.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                                <i class="fas fa-info-circle"></i> No bins found. Add bins from the main application.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Get all sensors for lookup
+                const sensors = sensorManagementAdmin.sensors;
+                
+                let html = '';
+                bins.forEach((bin, index) => {
+                    // Determine fill level color
+                    const fillLevel = bin.fillLevel || 0;
+                    let fillColor = '#10b981'; // green
+                    if (fillLevel >= 80) fillColor = '#ef4444'; // red
+                    else if (fillLevel >= 50) fillColor = '#f59e0b'; // orange
+                    
+                    // Find linked sensor
+                    let sensorInfo = 'N/A';
+                    let sensorStatus = 'no-sensor';
+                    let unlinkButton = '';
+                    
+                    // 🔍 DEBUG: Log bin sensor check
+                    if (bin.id === 'BIN-006' || bin.id === 'BIN-007') {
+                        console.log(`🔍 Checking ${bin.id}: sensorId=${bin.sensorId || 'NONE'}, sensors.has=${sensors.has(bin.sensorId)}`);
+                    }
+                    
+                    if (bin.sensorId) {
+                        const sensor = sensors.get(bin.sensorId);
+                        if (sensor) {
+                            sensorStatus = 'has-sensor';
+                            sensorInfo = `
+                                <div>
+                                    <strong>${sensor.name || 'Unnamed'}</strong><br>
+                                    <small style="color: #64748b; font-family: monospace;">${sensor.imei}</small><br>
+                                    <small style="color: #64748b;">Battery: ${sensor.battery || 'N/A'}</small>
+                                </div>
+                            `;
+                            unlinkButton = `
+                                <button class="btn-mini btn-warning" onclick="unlinkBinFromSensor('${bin.id}', '${bin.sensorId}')" title="Unlink Sensor">
+                                    <i class="fas fa-unlink"></i> Unlink
+                                </button>
+                            `;
+                        } else {
+                            sensorInfo = `<span style="color: #f59e0b;">${bin.sensorId.substring(0, 12)}... (sensor not found in Map)</span>`;
+                            // 🔍 DEBUG: List all sensor IDs
+                            if (bin.id === 'BIN-006' || bin.id === 'BIN-007') {
+                                console.log(`🔍 Available sensors:`, Array.from(sensors.keys()));
+                            }
+                        }
+                    }
+                    
+                    // Format coordinates
+                    let coordinates = 'N/A';
+                    if (bin.lat && bin.lng) {
+                        coordinates = `
+                            <div style="font-family: monospace; font-size: 0.85rem;">
+                                <div style="color: #059669;"><i class="fas fa-location-dot"></i> ${bin.lat.toFixed(4)}</div>
+                                <div style="color: #0284c7;"><i class="fas fa-location-dot"></i> ${bin.lng.toFixed(4)}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-trash-alt" style="color: #667eea; font-size: 1.2rem;"></i>
+                                    <div>
+                                        <strong style="color: #1e293b;">${bin.id}</strong><br>
+                                        ${bin.location && bin.location.address ? 
+                                            `<small style="color: #64748b;"><i class="fas fa-map-marker-alt"></i> ${bin.location.address}</small>` : 
+                                            '<small style="color: #94a3b8;">No location</small>'
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${coordinates}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="flex: 1; background: #e2e8f0; border-radius: 8px; height: 20px; overflow: hidden;">
+                                        <div style="width: ${fillLevel}%; height: 100%; background: ${fillColor}; transition: width 0.3s;"></div>
+                                    </div>
+                                    <span style="color: ${fillColor}; font-weight: 600; min-width: 45px;">${fillLevel}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span style="
+                                    padding: 0.25rem 0.75rem;
+                                    background: rgba(102, 126, 234, 0.1);
+                                    color: #667eea;
+                                    border-radius: 12px;
+                                    font-size: 0.85rem;
+                                    font-weight: 600;
+                                ">
+                                    ${bin.type || 'general'}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="bin-status-badge ${sensorStatus}">
+                                    ${bin.sensorId ? '<i class="fas fa-check-circle"></i> Linked' : '<i class="fas fa-times-circle"></i> No Sensor'}
+                                </span>
+                            </td>
+                            <td>${sensorInfo}</td>
+                            <td>
+                                <span style="color: #64748b; font-weight: 600;">
+                                    ${bin.capacity || 100}L
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    ${unlinkButton}
+                                    ${bin.sensorId ? `
+                                    <button class="btn-mini" style="background: #0d9488; color: white;" onclick="calibrateBin('${bin.id}')" title="Calibrate fill % from sensor distance (cm)">
+                                        <i class="fas fa-ruler"></i> Calibrate
+                                    </button>
+                                    ` : ''}
+                                    <button class="btn-mini btn-info" onclick="viewBinDetails('${bin.id}')" title="View Details">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                    <button class="btn-mini btn-danger" onclick="deleteBin('${bin.id}')" title="Delete Bin">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+                console.log(`✅ Displayed ${bins.length} bins`);
+                
+            } catch (error) {
+                console.error('❌ Error refreshing bins list:', error);
+                const tbody = document.getElementById('binTableBody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 2rem; color: #ef4444;">
+                                <i class="fas fa-exclamation-triangle"></i> Error loading bins: ${error.message}
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+        
+        // Unlink bin from sensor (bin-centric view)
+        async function unlinkBinFromSensor(binId, sensorId) {
+            try {
+                console.log(`🔓 Unlinking bin ${binId} from sensor ${sensorId}...`);
+                
+                // Get bin and sensor details
+                const bins = dataManager.getBins();
+                const bin = bins.find(b => b.id === binId);
+                const sensor = sensorManagementAdmin.sensors.get(sensorId);
+                
+                if (!bin) {
+                    throw new Error('Bin not found');
+                }
+                
+                if (!sensor) {
+                    throw new Error('Sensor not found');
+                }
+                
+                // World-class confirmation dialog
+                const confirmed = confirm(
+                    `🔓 UNLINK BIN FROM SENSOR\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `Bin: ${binId}\n` +
+                    `${bin.location && bin.location.address ? `📍 ${bin.location.address}\n` : ''}` +
+                    `📊 Fill Level: ${bin.fillLevel || 0}%\n\n` +
+                    `Sensor: ${sensor.name || 'Unnamed'}\n` +
+                    `IMEI: ${sensorId}\n` +
+                    `ID: ...${sensorId.slice(-4)}\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `⚠️ This will stop receiving sensor data\n` +
+                    `⚠️ Fill level updates will cease\n` +
+                    `⚠️ Real-time monitoring will stop\n\n` +
+                    `Do you want to continue?`
+                );
+                
+                if (!confirmed) {
+                    console.log(`❌ Unlink cancelled by user`);
+                    return;
+                }
+                
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                console.log(`🔓 UNLINKING FROM BIN VIEW`);
+                console.log(`   Bin: ${binId}`);
+                console.log(`   Sensor: ${sensorId}`);
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                
+                // Step 1: Update sensor record
+                console.log(`📋 Step 1/5: Updating sensor record...`);
+                sensor.binId = null;
+                sensor.unlinkedAt = new Date().toISOString();
+                console.log(`✅ Step 1/5: Sensor record updated`);
+                
+                // Step 2: Update database
+                console.log(`📋 Step 2/5: Updating database...`);
+                const response = await fetch('/api/sensors/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imei: sensorId,
+                        binId: null,
+                        unlinkedAt: new Date().toISOString()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Database update failed: ${response.status}`);
+                }
+                console.log(`✅ Step 2/5: Database updated`);
+                
+                // Step 3: Update bin record
+                console.log(`📋 Step 3/5: Updating bin record...`);
+                bin.sensorId = null;
+                bin.lastUnlinked = new Date().toISOString();
+                await dataManager.saveBin(bin);
+                console.log(`✅ Step 3/5: Bin ${binId} updated`);
+                
+                // Step 4: Update integration
+                console.log(`📋 Step 4/5: Updating integration system...`);
+                if (typeof findyBinSensorIntegration !== 'undefined') {
+                    try {
+                        await findyBinSensorIntegration.unlinkBinSensor(binId);
+                        console.log(`✅ Step 4/5: Integration updated`);
+                    } catch (integrationError) {
+                        console.warn(`⚠️ Integration update failed (non-critical):`, integrationError.message);
+                    }
+                }
+                
+                // Step 5: Broadcast events
+                console.log(`📋 Step 5/5: Broadcasting updates across application...`);
+                window.dispatchEvent(new CustomEvent('sensor:unlinked', {
+                    detail: { imei: sensorId, binId, timestamp: new Date().toISOString() }
+                }));
+                window.dispatchEvent(new CustomEvent('bin:sensor-updated', {
+                    detail: { binId, imei: null, action: 'unlinked' }
+                }));
+                window.dispatchEvent(new CustomEvent('admin:sensor-unlinked', {
+                    detail: { imei: sensorId, binId, timestamp: new Date().toISOString() }
+                }));
+                console.log(`✅ Step 5/5: Events broadcasted`);
+                
+                // Refresh both tables
+                refreshBinsList();
+                sensorManagementAdmin.refreshSensorTable();
+                
+                // Force refresh map and admin panel
+                setTimeout(() => {
+                    if (typeof window.forceRefreshBinsOnMap === 'function') {
+                        console.log(`🗺️ Forcing map refresh...`);
+                        window.forceRefreshBinsOnMap();
+                    }
+                    if (typeof window.updateAdminSensorStats === 'function') {
+                        console.log(`📊 Refreshing admin stats...`);
+                        window.updateAdminSensorStats();
+                    }
+                }, 500);
+                
+                showNotification(`✅ Bin ${binId} successfully unlinked from sensor ${sensorId.slice(-4)}`, 'success');
+                
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                console.log(`🎉 UNLINK COMPLETE!`);
+                console.log(`   Bin: ${binId}`);
+                console.log(`   Sensor: ${sensorId}`);
+                console.log(`   All systems updated successfully`);
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                
+            } catch (error) {
+                console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                console.error(`❌ UNLINK FAILED!`);
+                console.error(`   Bin: ${binId}`);
+                console.error(`   Sensor: ${sensorId}`);
+                console.error(`   Error: ${error.message}`);
+                console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                console.error(error);
+                
+                showNotification(`❌ Failed to unlink: ${error.message}`, 'error');
+            }
+        }
+        
+        // View bin details
+        function viewBinDetails(binId) {
+            const bins = dataManager.getBins();
+            const bin = bins.find(b => b.id === binId);
+            if (!bin) {
+                alert('Bin not found');
+                return;
+            }
+            
+            const emptyCm = bin.sensorDistanceEmptyCm != null ? bin.sensorDistanceEmptyCm : '(default 200)';
+            const fullCm = bin.sensorDistanceFullCm != null ? bin.sensorDistanceFullCm : '(default 0)';
+            const details = `
+BIN DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ID: ${bin.id}
+Location: ${bin.location && bin.location.address ? bin.location.address : 'Not set'}
+Fill Level: ${(bin.fillLevel != null ? bin.fillLevel : (bin.fill != null ? bin.fill : 0))}%
+Type: ${bin.type || 'general'}
+Capacity: ${bin.capacity || 100}L
+Sensor: ${bin.sensorId || 'Not linked'}
+
+Distance calibration (fill % from ultrasonic cm):
+  Empty (0%): ${emptyCm} cm
+  Full (100%): ${fullCm} cm
+
+Coordinates:
+  Latitude: ${bin.lat != null ? bin.lat : (bin.location && bin.location.lat != null ? bin.location.lat : 'N/A')}
+  Longitude: ${bin.lng != null ? bin.lng : (bin.location && bin.location.lng != null ? bin.location.lng : 'N/A')}
+
+Last Updated: ${bin.lastUpdated ? new Date(bin.lastUpdated).toLocaleString() : 'N/A'}
+${bin.lastUnlinked ? `Last Unlinked: ${new Date(bin.lastUnlinked).toLocaleString()}` : ''}
+            `.trim();
+            
+            alert(details);
+        }
+        
+        // Calibrate bin fill % from sensor distance (cm): empty distance = 0% fill, full distance = 100% fill
+        async function calibrateBin(binId) {
+            const bins = dataManager.getBins();
+            const bin = bins.find(b => b.id === binId);
+            if (!bin) {
+                alert('Bin not found');
+                return;
+            }
+            const currentEmpty = bin.sensorDistanceEmptyCm != null ? bin.sensorDistanceEmptyCm : 200;
+            const currentFull = bin.sensorDistanceFullCm != null ? bin.sensorDistanceFullCm : 0;
+            const emptyStr = prompt(
+                'Distance when bin is EMPTY (0% full), in cm.\nMax distance from sensor to bottom = empty.\nDefault: 200',
+                String(currentEmpty)
+            );
+            if (emptyStr === null) return;
+            const fullStr = prompt(
+                'Distance when bin is FULL (100% full), in cm.\nMin distance = full.\nDefault: 0',
+                String(currentFull)
+            );
+            if (fullStr === null) return;
+            const emptyCm = parseFloat(emptyStr);
+            const fullCm = parseFloat(fullStr);
+            if (isNaN(emptyCm) || isNaN(fullCm) || emptyCm <= fullCm) {
+                alert('Invalid values: Empty (cm) must be greater than Full (cm).');
+                return;
+            }
+            dataManager.updateBin(binId, { sensorDistanceEmptyCm: emptyCm, sensorDistanceFullCm: fullCm });
+            if (typeof syncManager !== 'undefined' && syncManager.syncToServer) {
+                await syncManager.syncToServer({ bins: dataManager.getBins() }, 'partial');
+            }
+            if (typeof window.refreshBinsList === 'function') refreshBinsList();
+            alert(`Calibration saved: Empty=${emptyCm} cm, Full=${fullCm} cm. Fill % will update from sensor distance.`);
+        }
+        
+        // Delete bin with world-class confirmation
+        async function deleteBin(binId) {
+            try {
+                console.log(`🗑️ Delete requested for bin ${binId}...`);
+                
+                // Get bin details
+                const bins = dataManager.getBins();
+                const bin = bins.find(b => b.id === binId);
+                
+                if (!bin) {
+                    throw new Error('Bin not found');
+                }
+                
+                // Check if bin has sensor
+                let sensorWarning = '';
+                if (bin.sensorId) {
+                    const sensor = sensorManagementAdmin.sensors.get(bin.sensorId);
+                    sensorWarning = `\n⚠️ WARNING: This bin is linked to sensor ${sensor?.name || bin.sensorId}\n⚠️ The sensor will be unlinked automatically\n`;
+                }
+                
+                // World-class confirmation
+                const confirmed = confirm(
+                    `🗑️ DELETE BIN\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `Bin: ${binId}\n` +
+                    `${bin.location && bin.location.address ? `📍 ${bin.location.address}\n` : ''}` +
+                    `📊 Fill Level: ${bin.fillLevel || 0}%\n` +
+                    `📦 Capacity: ${bin.capacity || 100}L\n` +
+                    `🏷️ Type: ${bin.type || 'general'}\n\n` +
+                    sensorWarning +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `⚠️ THIS ACTION CANNOT BE UNDONE!\n` +
+                    `⚠️ All bin data will be permanently deleted\n` +
+                    `⚠️ Collection history will be lost\n\n` +
+                    `Are you absolutely sure you want to delete this bin?`
+                );
+                
+                if (!confirmed) {
+                    console.log(`❌ Delete cancelled by user`);
+                    return;
+                }
+                
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                console.log(`🗑️ DELETING BIN ${binId}...`);
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                
+                // Step 1: Unlink sensor if linked
+                if (bin.sensorId) {
+                    console.log(`📋 Step 1: Unlinking sensor ${bin.sensorId}...`);
+                    const sensor = sensorManagementAdmin.sensors.get(bin.sensorId);
+                    if (sensor) {
+                        sensor.binId = null;
+                        await fetch('/api/sensors/update', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ imei: sensor.imei, binId: null })
+                        });
+                        console.log(`  ✓ Sensor unlinked`);
+                    }
+                }
+                
+                // Step 2: Remove from integration
+                if (typeof findyBinSensorIntegration !== 'undefined' && bin.sensorId) {
+                    console.log(`📋 Step 2: Removing from integration...`);
+                    delete findyBinSensorIntegration.binSensorMapping[binId];
+                    delete findyBinSensorIntegration.sensorToBinMapping[bin.sensorId];
+                    console.log(`  ✓ Integration updated`);
+                }
+                
+                // Step 3: Delete from dataManager (localStorage)
+                console.log(`📋 Step 3: Deleting from localStorage...`);
+                dataManager.deleteBin(binId);
+                
+                // AGGRESSIVE: Also mark as deleted in a separate list
+                let deletedBins = JSON.parse(localStorage.getItem('deletedBins') || '[]');
+                if (!deletedBins.includes(binId)) {
+                    deletedBins.push(binId);
+                    localStorage.setItem('deletedBins', JSON.stringify(deletedBins));
+                    console.log(`  ✓ Added ${binId} to deleted bins blacklist`);
+                }
+                
+                // AGGRESSIVE: Remove from all possible sources
+                let allBins = dataManager.getBins();
+                allBins = allBins.filter(b => b.id !== binId);
+                dataManager.setData('bins', allBins);
+                console.log(`  ✓ Bin deleted from localStorage (${allBins.length} bins remaining)`);
+                
+                // Step 4: Sync deletion to server (with retry)
+                console.log(`📋 Step 4: Syncing deletion to server...`);
+                let syncSuccess = false;
+                if (typeof syncManager !== 'undefined' && typeof syncManager.syncToServer === 'function') {
+                    try {
+                        await syncManager.syncToServer();
+                        console.log(`  ✓ First sync completed`);
+                        
+                        // Wait and sync again to ensure it stuck
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        await syncManager.syncToServer();
+                        console.log(`  ✓ Second sync completed (confirmation)`);
+                        syncSuccess = true;
+                    } catch (e) {
+                        console.warn(`  ⚠️ Server sync failed:`, e.message);
+                    }
+                } else {
+                    console.warn(`  ⚠️ syncManager not available`);
+                }
+                
+                // Step 4.5: Force immediate sync from server and re-filter
+                if (syncSuccess) {
+                    console.log(`📋 Step 4.5: Verifying server sync...`);
+                    try {
+                        await syncManager.syncFromServer();
+                        console.log(`  ✓ Synced from server for verification`);
+                        
+                        // AGGRESSIVE: Re-filter in case server brought it back
+                        allBins = dataManager.getBins().filter(b => b.id !== binId);
+                        dataManager.setData('bins', allBins);
+                        console.log(`  ✓ Re-filtered after server sync (${allBins.length} bins)`);
+                    } catch (e) {
+                        console.warn(`  ⚠️ Server verification failed:`, e.message);
+                    }
+                }
+                
+                // Step 5: Refresh UI
+                console.log(`📋 Step 5: Refreshing UI...`);
+                await refreshBinsList();
+                if (typeof sensorManagementAdmin.refreshSensorTable === 'function') {
+                    sensorManagementAdmin.refreshSensorTable();
+                }
+                console.log(`  ✓ UI refreshed`);
+                
+                // Step 6: Broadcast deletion event to entire app
+                console.log(`📋 Step 6: Broadcasting deletion event...`);
+                window.dispatchEvent(new CustomEvent('binDeleted', { detail: { binId } }));
+                window.dispatchEvent(new CustomEvent('bin:deleted', { detail: { binId } }));
+                // Also trigger storage event for other tabs/pages
+                localStorage.setItem('lastBinDeleted', JSON.stringify({ binId, timestamp: Date.now() }));
+                console.log(`  ✓ Events broadcast`)
+                
+                console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                console.log(`✅ BIN ${binId} DELETED SUCCESSFULLY`);
+                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+                
+                // Show success notification
+                showNotification(`Bin ${binId} deleted successfully!`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error deleting bin:', error);
+                showNotification(`Error deleting bin: ${error.message}`, 'error');
+            }
+        }
+        
+        // Export bins data
+        function exportBinsData() {
+            try {
+                if (typeof dataManager === 'undefined') {
+                    showNotification('dataManager not available', 'error');
+                    return;
+                }
+                
+                const bins = dataManager.getBins();
+                const csv = [
+                    ['Bin ID', 'Location', 'Fill Level', 'Type', 'Capacity', 'Sensor ID', 'Latitude', 'Longitude'].join(','),
+                    ...bins.map(b => [
+                        b.id,
+                        b.location && b.location.address ? `"${b.location.address}"` : '',
+                        b.fillLevel || 0,
+                        b.type || 'general',
+                        b.capacity || 100,
+                        b.sensorId || '',
+                        b.location && b.location.lat ? b.location.lat : '',
+                        b.location && b.location.lng ? b.location.lng : ''
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bins-export-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showNotification('Bins data exported!', 'success');
+            } catch (error) {
+                showNotification('Error exporting data: ' + error.message, 'error');
+            }
+        }
+        
+        // Show notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                setTimeout(() => notification.remove(), 400);
+            }, 4000);
+        }
+        
+        // Add slideOutRight animation
+        (function() {
+            const notificationStyle = document.createElement('style');
+            notificationStyle.textContent = `
+                @keyframes slideOutRight {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(notificationStyle);
+        })();
+        
+        // Helper functions for the page
+        async function addSensorNow() {
+            const imei = document.getElementById('sensorIMEI').value.trim();
+            const binId = document.getElementById('sensorBinId').value || null;
+            const name = document.getElementById('sensorName').value.trim() || null;
+            
+            if (!imei) {
+                showNotification('Please enter a sensor IMEI', 'error');
+                return;
+            }
+            
+            try {
+                showNotification('Adding sensor...', 'info');
+                await sensorManagementAdmin.addSensor(imei, binId, name);
+                document.getElementById('addSensorModal').style.display = 'none';
+                showNotification('Sensor added successfully!', 'success');
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function bulkImportNow() {
+            const data = document.getElementById('bulkImportData').value;
+            
+            if (!data.trim()) {
+                showNotification('Please enter sensor data', 'error');
+                return;
+            }
+            
+            try {
+                showNotification('Starting bulk import...', 'info');
+                await sensorManagementAdmin.bulkImportSensors(data);
+                setTimeout(() => {
+                    document.getElementById('bulkImportModal').style.display = 'none';
+                }, 2000);
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function linkSensorNow() {
+            const imei = document.getElementById('linkSensorIMEI').value;
+            const binId = document.getElementById('linkBinId').value;
+            
+            if (!binId) {
+                showNotification('Please select a bin', 'error');
+                return;
+            }
+            
+            try {
+                // Check if creating new bin
+                if (binId === '__CREATE_NEW__') {
+                    const newBinId = document.getElementById('newBinId').value;
+                    const newBinLocation = document.getElementById('newBinLocation').value.trim();
+                    const newBinLat = parseFloat(document.getElementById('newBinLat').value) || null;
+                    const newBinLng = parseFloat(document.getElementById('newBinLng').value) || null;
+                    const newBinType = document.getElementById('newBinType').value;
+                    const newBinCapacity = parseInt(document.getElementById('newBinCapacity').value) || 100;
+                    
+                    if (!newBinLocation) {
+                        showNotification('Please enter a location name', 'error');
+                        return;
+                    }
+                    
+                    let lat = newBinLat;
+                    let lng = newBinLng;
+                    
+                    // Try to fetch sensor GPS
+                    try {
+                        showNotification('Fetching sensor GPS...', 'info');
+                        const sensorCoords = await sensorManagementAdmin.getSensorCoordinates(imei);
+                        
+                        if (sensorCoords && sensorCoords.lat && sensorCoords.lng) {
+                            lat = sensorCoords.lat;
+                            lng = sensorCoords.lng;
+                            console.log(`✅ Using sensor GPS: ${lat}, ${lng}`);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Could not get sensor GPS:', error);
+                    }
+                    
+                    if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+                        lat = 25.2854;
+                        lng = 51.5310;
+                    }
+                    
+                    showNotification('Creating bin and linking sensor...', 'info');
+                    await sensorManagementAdmin.createBinAndLink(imei, {
+                        id: newBinId,
+                        location: newBinLocation,
+                        lat: lat,
+                        lng: lng,
+                        type: newBinType,
+                        capacity: newBinCapacity
+                    });
+                    
+                    document.getElementById('linkSensorModal').style.display = 'none';
+                    
+                    setTimeout(() => {
+                        sensorManagementAdmin.refreshSensorTable();
+                    }, 500);
+                    
+                } else {
+                    showNotification('Linking sensor to bin...', 'info');
+                    await sensorManagementAdmin.linkSensorToBin(imei, binId);
+                    document.getElementById('linkSensorModal').style.display = 'none';
+                }
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+                console.error('Link error:', error);
+            }
+        }
+        
+        // Refresh all sensors
+        async function refreshAllSensors() {
+            try {
+                showNotification('Refreshing sensor status...', 'info');
+                await sensorManagementAdmin.checkAllSensorStatus();
+                showNotification('Sensor status refreshed!', 'success');
+            } catch (error) {
+                showNotification('Error refreshing sensors: ' + error.message, 'error');
+            }
+        }
+        
+        // Export sensor data
+        function exportSensorData() {
+            try {
+                const sensors = Array.from(sensorManagementAdmin.sensors.values());
+                const csv = [
+                    ['IMEI', 'Name', 'Status', 'Linked Bin', 'Battery', 'Operator', 'Last Seen'].join(','),
+                    ...sensors.map(s => [
+                        s.imei,
+                        s.name || '',
+                        s.status || 'unknown',
+                        s.binId || '',
+                        s.battery || '',
+                        s.operator || '',
+                        s.lastSeen || ''
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sensors-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showNotification('Sensor data exported!', 'success');
+            } catch (error) {
+                showNotification('Error exporting data: ' + error.message, 'error');
+            }
+        }
+        
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Initializing Sensor Management...');
+            
+            // dataManager is already initialized globally in data-manager.js
+            // Just verify it's available
+            if (typeof dataManager !== 'undefined') {
+                const bins = dataManager.getBins();
+                console.log(`✅ DataManager available with ${bins.length} bins`);
+            } else {
+                console.warn('⚠️ dataManager not found - it should be loaded from data-manager.js');
+            }
+            
+            await sensorManagementAdmin.initialize();
+            console.log('✅ Sensor Management initialized');
+        });
+        
+        // Auto-refresh status every 60 seconds
+        setInterval(() => {
+            if (!document.hidden && sensorManagementAdmin.sensors.size > 0) {
+                console.log('🔄 Auto-refreshing sensor status...');
+                sensorManagementAdmin.checkAllSensorStatus();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
+

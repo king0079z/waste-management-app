@@ -1,0 +1,219 @@
+/**
+ * FORCE MONITORING HEIGHTS - Override all other styles
+ * Maximum specificity to ensure heights are applied (beats styles.css 600px limits)
+ */
+
+/* Map container: TALL section - use 90% viewport height (increase from previous limit) */
+#monitoring .map-container,
+html body #monitoring .map-container,
+.map-container {
+    min-height: 90vh !important;
+    height: 90vh !important;
+    max-height: none !important;
+}
+
+#monitoring #map,
+#monitoring .map-container #map,
+html body #monitoring #map {
+    min-height: 85vh !important;
+    height: 100% !important;
+    max-height: none !important;
+}
+
+/* Critical Bins & Active Alerts: EXPANDED - show ALL items (no max-height collapse) */
+#monitoring #criticalBinsList,
+#criticalBinsList {
+    max-height: none !important;
+    min-height: 80px !important;
+    overflow-y: visible !important;
+}
+
+#monitoring #activeAlertsList,
+#activeAlertsList {
+    max-height: none !important;
+    min-height: 80px !important;
+    overflow-y: visible !important;
+}
+
+/* Right panel: fill column, NO 600px cap - scroll when content is tall */
+#monitoring .tracking-panel,
+html body #monitoring .tracking-panel,
+.tracking-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+
+/* CRITICAL: All three panels must NEVER shrink - each keeps its content visible */
+#monitoring .tracking-panel .glass-card,
+.tracking-panel .glass-card {
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+}
+
+/* System Status: fixed min height so it never collapses */
+#monitoring .tracking-panel .glass-card.system-status-card {
+    min-height: 180px !important;
+}
+
+/* Critical Bins panel: ALWAYS expanded - never collapsed to header-only */
+#monitoring .tracking-panel .glass-card.critical-bins-section,
+#monitoring .critical-bins-section,
+html body #monitoring .critical-bins-section,
+.tracking-panel .critical-bins-section {
+    min-height: 240px !important;
+    flex-shrink: 0 !important;
+}
+/* Force the list container inside Critical Bins to reserve space */
+#monitoring .critical-bins-section .bin-list,
+#monitoring .critical-bins-section #criticalBinsList {
+    min-height: 160px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Active Alerts panel: always expanded with visible list (never shrunk to a bar) */
+#monitoring .tracking-panel .glass-card.active-alerts-section,
+#monitoring .active-alerts-section,
+.tracking-panel .active-alerts-section {
+    min-height: 280px !important;
+    flex-shrink: 0 !important;
+}
+
+/* System Status section - always expanded, content never collapsed */
+#monitoring .system-status-card {
+    min-height: 180px !important;
+    margin-bottom: 1.5rem !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+}
+
+#monitoring .system-status-card .tracking-header,
+#monitoring .system-status-card .stats-grid {
+    display: block !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+#monitoring .system-status-card .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    min-height: 100px !important;
+}
+
+#monitoring .system-status-card .status-stat-card {
+    min-height: 100px !important;
+    overflow: visible !important;
+    display: flex !important;
+    visibility: visible !important;
+}
+
+#monitoring .system-status-card .stat-value {
+    font-size: 1.75rem !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+#monitoring .system-status-card .stat-label {
+    font-size: 0.8rem !important;
+    visibility: visible !important;
+}
+
+/* Critical Bins section - always expanded, list always visible */
+#monitoring .critical-bins-section .section-header,
+#monitoring .critical-bins-section #criticalBinsList,
+#monitoring .critical-bins-section .bin-list {
+    display: block !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+#monitoring .critical-bins-section #criticalBinsList {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 140px !important;
+}
+
+/* Ensure Critical Bins & Active Alerts card bodies are never collapsed */
+#monitoring .critical-bins-section,
+#monitoring .active-alerts-section {
+    display: block !important;
+}
+
+#monitoring .active-alerts-section #activeAlertsList {
+    min-height: 180px !important;
+}
+
+/* Scrollbar styling for better UX */
+#criticalBinsList::-webkit-scrollbar,
+#activeAlertsList::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+#criticalBinsList::-webkit-scrollbar-track,
+#activeAlertsList::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+}
+
+#criticalBinsList::-webkit-scrollbar-thumb,
+#activeAlertsList::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.4) !important;
+    border-radius: 4px !important;
+}
+
+#criticalBinsList::-webkit-scrollbar-thumb:hover,
+#activeAlertsList::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.6) !important;
+}
+
+/* Make items more spacious */
+.critical-bin-item {
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.alert-item {
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* Ensure content doesn't overflow */
+#monitoring {
+    overflow-y: auto !important;
+}
+
+/* Better spacing for monitoring section */
+#monitoring > h1 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Force apply on any viewport size */
+@media (min-width: 1px) {
+    #monitoring #map {
+        min-height: 85vh !important;
+        height: 100% !important;
+    }
+    
+    #monitoring .map-container {
+        min-height: 90vh !important;
+        height: 90vh !important;
+    }
+    
+    #criticalBinsList {
+        max-height: none !important;
+    }
+    
+    #activeAlertsList {
+        max-height: none !important;
+    }
+}
+
+/* Console confirmation */
+body::after {
+    content: "Monitoring: viewport height, all panels expanded";
+    position: fixed;
+    bottom: -100px;
+    left: 0;
+    opacity: 0;
+}

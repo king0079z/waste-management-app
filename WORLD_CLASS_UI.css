@@ -1,0 +1,316 @@
+/* WORLD CLASS UI - Consistent Design System for Live Monitoring */
+
+/* ===== DESIGN TOKENS ===== */
+:root {
+    /* Colors - Professional Dark Theme */
+    --primary-bg: #0f172a;
+    --secondary-bg: #1e293b;
+    --card-bg: rgba(30, 41, 59, 0.95);
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    
+    /* Status Colors */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+    
+    /* Text Colors */
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+}
+
+/* ===== BIN POPUP REDESIGN ===== */
+.bin-popup .leaflet-popup-content-wrapper {
+    background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--primary-bg) 100%) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-xl) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.bin-popup .leaflet-popup-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--text-primary) !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    min-width: 340px !important;
+}
+
+.bin-popup .leaflet-popup-tip {
+    background: var(--secondary-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+.bin-popup .leaflet-popup-close-button {
+    color: var(--text-muted) !important;
+    font-size: 28px !important;
+    font-weight: 300 !important;
+    padding: 12px !important;
+    top: 12px !important;
+    right: 12px !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+    z-index: 1000 !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.bin-popup .leaflet-popup-close-button:hover {
+    color: var(--text-primary) !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    transform: scale(1.1) !important;
+}
+
+/* ===== SYSTEM STATUS CARDS ===== */
+.stats-grid {
+    display: grid !important;
+    gap: 1rem !important;
+}
+
+.stat-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 1.5rem !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-lg) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.stat-card h3 {
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    margin: 0 0 0.5rem 0 !important;
+    line-height: 1 !important;
+}
+
+.stat-card p {
+    font-size: 0.875rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-weight: 500 !important;
+}
+
+/* ===== ALERT CARDS ===== */
+.alert-item {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-left: 4px solid var(--color-danger) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 1rem 1.25rem !important;
+    margin-bottom: 0.75rem !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.2s ease !important;
+}
+
+.alert-item:hover {
+    transform: translateX(4px) !important;
+    box-shadow: var(--shadow-md) !important;
+    border-left-width: 6px !important;
+}
+
+.alert-item.warning {
+    border-left-color: var(--color-warning) !important;
+}
+
+.alert-item.info {
+    border-left-color: var(--color-info) !important;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-info) 0%, #2563eb 100%) !important;
+    border: none !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    color: white !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: all 0.2s ease !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-md) !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%) !important;
+    border: none !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    color: white !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* ===== PROGRESS BARS ===== */
+.progress-bar {
+    height: 12px !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.progress-bar-fill {
+    height: 100% !important;
+    border-radius: 6px !important;
+    transition: width 0.6s ease, background 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.progress-bar-fill::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%) !important;
+    animation: shimmer 2s infinite !important;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ===== MAP CONTAINER ===== */
+#map {
+    border-radius: var(--radius-lg) !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-lg) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+/* ===== LEAFLET MARKER - Remove white background ===== */
+.leaflet-div-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 4px !important;
+    transition: background 0.2s ease !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease !important;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.4s ease !important;
+}
+
+/* ===== GLASSMORPHISM CARDS ===== */
+.glass-card {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    backdrop-filter: blur(20px) !important;
+    box-shadow: var(--shadow-md) !important;
+    padding: 1.5rem !important;
+}
+
+/* ===== TYPOGRAPHY IMPROVEMENTS ===== */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--text-primary) !important;
+}
+
+p {
+    color: var(--text-secondary) !important;
+    line-height: 1.6 !important;
+}
+
+/* ===== CRITICAL BINS LIST ===== */
+.critical-bins-list {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+}
+
+.critical-bin-item {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-left: 4px solid var(--color-danger) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.critical-bin-item:hover {
+    transform: translateX(4px) !important;
+    box-shadow: var(--shadow-md) !important;
+    border-left-width: 6px !important;
+}

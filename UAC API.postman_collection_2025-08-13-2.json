@@ -1,0 +1,680 @@
+{
+	"info": {
+		"_postman_id": "2e5323ac-e277-43b9-b7d5-16ed101c6528",
+		"name": "UAC API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24617884"
+	},
+	"item": [
+		{
+			"name": "get_history",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					},
+					{
+						"key": "DATA",
+						"value": "[222]",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/history/2025-02-01 00:00:00/2025-02-27 00:00:00",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"history",
+						"2025-02-01 00:00:00",
+						"2025-02-27 00:00:00"
+					]
+				},
+				"description": "A method for searching a device’s history within a specified start and end period. After `/device/{imei}/history/`, the first date is the start of the period, and the second date is the end of the period of interest. Both start and end dates are mandatory.\n\nThere is an option to retrieve results only for a specific **dataTypeID** if you do not want to retrieve all data for the period.\n\n**Example**:  \nIn the header, **DATA** (in uppercase) is passed, and the value is an array in square brackets, with the array values separated by commas - `[200, 201, 54]`. This way, the history will be retrieved only for these three **dataTypeID**. If **DATA** is not passed in the header, the response will include all available **dataTypeID** results for the period.\""
+			},
+			"response": []
+		},
+		{
+			"name": "get_mbus",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true,
+					"accept": true,
+					"user-agent": true,
+					"accept-encoding": true,
+					"connection": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "KEY",
+						"value": "c4a4bcf940fecf488b6a7920a3fa5d03",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_server",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"fDate\":\"2025-07-30 00:00:00\",\n\t\"tDate\":\"2025-07-30 23:59:59\",\n    \"data\":[],\n    \"organization\":\"ruse\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/device/mbus",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"mbus"
+					],
+					"query": [
+						{
+							"key": "KEY",
+							"value": "c4a4bcf940fecf488b6a7920a3fa5d03",
+							"disabled": true
+						},
+						{
+							"key": "X-API-KEY",
+							"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+							"disabled": true
+						},
+						{
+							"key": "Server",
+							"value": "Findy",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{username}\",\n    \"password\": \"{password}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/login",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"login"
+					]
+				},
+				"description": "A login method in the API that will return an access **token (hash)**, which can then be used to call the other methods.\n\nErrors\n\n1. Error 401 - Wrong username or password\n    \n2. Error 400 - Bad request\n    \n3. Error 403 - Forbidden"
+			},
+			"response": []
+		},
+		{
+			"name": "command",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					},
+					{
+						"key": "Api",
+						"value": "findy",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"body\": \"*SET,265\",\n    \"commandId\": \"cmd\",\n    \"via\": \"GPRS\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/command",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"command"
+					],
+					"query": [
+						{
+							"key": "KEY",
+							"value": "7169382f4f4365d14cecea7e7956d148",
+							"disabled": true
+						}
+					]
+				},
+				"description": "A method for sending a command.\n\nThe **body** contains the actual command,\n\n- **commandId** is the specific ID of the command being sent,\n    \n- **statusId** is the status of the command,\n    \n- **via** is the method of sending the command, either via GPRS or SMS.\"\n    \n\n```\nAll parameters are required.\n\n ```\n\nThere is also a new optional parameter:\n\n- **expirationTime** - a parameter that can be set to define how long the command remains valid. The value is in minutes. If the command is sent at 12:00:00 with **expirationTime: 5**, then by 12:06:00 the command will no longer be taken by the device. If **expirationTime** is not set, the command has an indefinite lifetime.\n    \n\n**Description**:\n\nWhen you have a command of type **(Setting)**, which is used to change the current setting:\n\n```\njsonCopy code{\"body\":\"*SET,457,2\",\"commandId\":\"set\",\"via\":\"GPRS\"}\n\n ```\n\n- **Body** - all commands of this type start with `\\*` (star), followed by `SET -> command number -> value to set`.\n    \n- **CommandId** - required (`set`).\n    \n- **Via** - the method of sending the command, either via (`GPRS`) or (`SMS`).\n    \n\nWhen you have a command of type **(measurement)**:\n\n```\njsonCopy code{\"body\":\"*GET,462$\",\"commandId\":\"get\",\"via\":\"GPRS\"}\n\n ```\n\n- **Body** - all commands of this type start with `\\*` (star), followed by `GET -> command number -> $`.\n    \n- **CommandId** - required (`get`).\n    \n- **Via** - the method of sending the command, either via (`GPRS`) or (`SMS`).\n    \n\nWhen you have a command of type **(command)**:\n\n```\njsonCopy code{\"body\":\"*SET,222\",\"commandId\":\"cmd\",\"via\":\"GPRS\"}\n\n ```\n\n- **Body** - all commands of this type start with `\\\\*` (star), followed by `SET -> command number`.\n    \n- **CommandId** - required (`cmd`).\n    \n- **Via** - the method of sending the command, either via (`GPRS`) or (`SMS`).\"\n    \n\nErrors\n\n1. Error 400 - Bad Request commandId is not integer, command is not send\n    \n2. Error 409 - This command is already set and waiting to be executed"
+			},
+			"response": []
+		},
+		{
+			"name": "command",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					},
+					{
+						"key": "Api",
+						"value": "findy",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"requestID\":\"641\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/command",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"command"
+					],
+					"query": [
+						{
+							"key": "KEY",
+							"value": "7169382f4f4365d14cecea7e7956d148",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Command to delete a pending command requestID is required this is the ID of the command request."
+			},
+			"response": []
+		},
+		{
+			"name": "search_device",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"imei\": \"{imei}\",\n    \"deviceOwnerID\": \"{deviceOwnerID}\",\n    \"deviceVersionID\": \"{integer}\",\n    \"name\": \"{name}\",\n    \"lastReport\": {\n        \"date\": \"yyyy-mm-dd hh:mm:ss\",\n        \"operator\": \"<\"\n    },\n    \"batteryLevel\": {\n        \"value\": 50,\n        \"operator\": \">\"\n    },\n    \"car\": {\n        \"chasis\": \"{chasis}\",\n        \"plate\": \"{plate}\",\n        \"brand\": \"{brand}\",\n        \"model\": \"{model}\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/search",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"search"
+					]
+				},
+				"description": "How to search for devices. Search can be done by part of (IMEI, name, deviceOwnerID, nameplate, chassis, brand, model). Parameters (groupID, deviceVersionID) are always searched as integers. The lastReport parameter must always be combined with a date and operator. The batteryLevel parameter must always be combined with a value and an operator. Search criteria can be one or more."
+			},
+			"response": []
+		},
+		{
+			"name": "get_device",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					},
+					{
+						"key": "DATA",
+						"value": "[111,333]",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}"
+					]
+				},
+				"description": "A method to retrieve information about a single device. Description of characteristics:\n\n**OBJECTS**:\n\n- **deviceInfo** (contains:\n    \n    - 'imei' - unique identifier,\n        \n    - 'name' - name of the device,\n        \n    - 'deviceOwnerID' - owner,\n        \n    - 'deviceGroupID' - group to which the device is assigned,\n        \n    - 'deviceStatusID' - status of the device,\n        \n    - 'lastModTime' - when the device last reported)\n        \n- **actionCommand** (contains other objects that, depending on the type of device, allow remote OVER THE AIR updates. This includes all commands for successful updates, factory reset, and reboot of the device)\n    \n- **deviceSettings** (contains device settings:\n    \n    - 'alarm' (0-1) whether the alarm is off or on,\n        \n    - 'liveSetTime' - shows when live tracking was initiated,\n        \n    - 'User' and 'pass' - usually, 'User' is the name, and 'pass' shows the device version,\n        \n    - 'phone1', 'phone2', 'phone3' - these are three default phone numbers to which an SMS is sent if there is a problem with the device,\n        \n    - 'q' (0-1) - becomes 1 only when live tracking is started)\n        \n- **incell** (contains information about the heard cells for GSM positioning)\n    \n- **ingps** (contains information about the last GPS positioning)\n    \n- **inmode** (contains information about the last mode of the device)\n    \n- **passport** (contains information about the device:\n    \n    - 'deviceVersionID' - version of the device,\n        \n    - 'phone' - device phone number,\n        \n    - 'prefix' - prefix for commands, default is (#),\n        \n    - 'versionName' - name of the device version)\n        \n- **report** (contains other report objects: settings, command, measurement)\n    \n- **pending** (contains pending commands to be taken by the device)\n    \n- **simCard** (contains information about the device's SIM card)\n    \n\n**PROPERTIES**:\n\n- 'ago' - time of the last GSM report\n    \n- 'ago_gps' - time of the last GPS report\n    \n- 'battery' - battery level\n    \n- 'country' - country of the serving operator\n    \n- 'operator' - serving operator\n    \n- 'deviceID' - unique identifier of the device (imei)\n    \n- 'lastReportType' - last type of positioning\""
+			},
+			"response": []
+		},
+		{
+			"name": "install",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"plate\":\"malee\",\"chasis\":\"lele\",\"brand\":\"string\",\"model\":\"string\",\"version\":\"string\",\"color\":\"string\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/install",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"install"
+					]
+				},
+				"description": "A method to check if the chassis already exists in the database. After **checkChassis**, the chassis we want to verify is provided. This is a way to add information about the device—its location and other characteristics."
+			},
+			"response": []
+		},
+		{
+			"name": "install",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/install",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"install"
+					]
+				},
+				"description": "Device uninstall method."
+			},
+			"response": []
+		},
+		{
+			"name": "install",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"plate\":\"111122222\",\"chasis\":\"wwww\",\"brand\":\"string\",\"model\":\"string\",\"version\":\"string\",\"color\":\"string\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/car",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"car"
+					]
+				},
+				"description": "A method to edit the device installation information. DeviceID required parameter."
+			},
+			"response": []
+		},
+		{
+			"name": "StartliveTracking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/livetracking",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"livetracking"
+					]
+				},
+				"description": "Method for initiating device tracking with GPS positioning, after which an SMS must be sent to the device.\n\nReturn requestID"
+			},
+			"response": []
+		},
+		{
+			"name": "GetliveTracking",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/livetracking",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"livetracking"
+					]
+				},
+				"description": "A method that must be called at regular intervals after starting startLiveTracking, which provides information about the position (GPS) of the tracked device.\n\nIf the GPS positioning is not available, the method returns null"
+			},
+			"response": []
+		},
+		{
+			"name": "StopliveTracking",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/livetracking",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"livetracking"
+					]
+				},
+				"description": "Method for stopping device tracking with GPS positioning."
+			},
+			"response": []
+		},
+		{
+			"name": "Check pending command",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "KEY",
+						"value": "9eec0ae7a6c902499f283bff99992a54",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "X-API-KEY",
+						"value": "BEdRCeAZ8Wog47s5YpBhu0ZZV4hLrsV1234",
+						"type": "text"
+					},
+					{
+						"key": "KEY",
+						"value": "{hash}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Server",
+						"value": "findyIoT_serverApi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://uac.higps.org/device/{imei}/checkPendingCommand/",
+					"protocol": "https",
+					"host": [
+						"uac",
+						"higps",
+						"org"
+					],
+					"path": [
+						"device",
+						"{imei}",
+						"checkPendingCommand",
+						""
+					]
+				},
+				"description": "A method to check if there is a pending command for the device."
+			},
+			"response": []
+		}
+	]
+}

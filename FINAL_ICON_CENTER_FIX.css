@@ -1,0 +1,271 @@
+/* ============================================
+   FINAL ICON CENTERING FIX - MAXIMUM PRIORITY
+   This CSS file MUST load LAST to override everything
+   ============================================ */
+
+/* FORCE ALL ICONS TO CENTER - ABSOLUTE PRIORITY */
+.stat-icon,
+.metric-icon,
+.ai-module-icon,
+.status-stat-icon,
+div.stat-icon,
+div.metric-icon,
+div.ai-module-icon,
+div.status-stat-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Fleet Management Icons - FORCE CENTER */
+.fleet-stat-card .stat-icon,
+div.fleet-stat-card div.stat-icon {
+    width: 80px !important;
+    height: 80px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.5rem auto !important;
+}
+
+.fleet-stat-card .stat-icon i,
+div.fleet-stat-card div.stat-icon i {
+    font-size: 2.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Dashboard Metric Cards - FORCE CENTER */
+.dashboard-metric-card,
+div.dashboard-metric-card {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.dashboard-metric-card .stat-icon,
+div.dashboard-metric-card div.stat-icon {
+    width: 70px !important;
+    height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.25rem auto !important;
+}
+
+.dashboard-metric-card .stat-icon i,
+div.dashboard-metric-card div.stat-icon i {
+    font-size: 2.25rem !important;
+}
+
+.dashboard-metric-card .stat-header,
+div.dashboard-metric-card div.stat-header {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+/* Analytics Metric Cards - FORCE CENTER */
+.analytics-metric-card,
+div.analytics-metric-card {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.analytics-metric-card .metric-icon,
+div.analytics-metric-card div.metric-icon {
+    width: 64px !important;
+    height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.25rem auto !important;
+}
+
+.analytics-metric-card .metric-icon i,
+div.analytics-metric-card div.metric-icon i {
+    font-size: 2rem !important;
+}
+
+.analytics-metric-card .metric-data,
+div.analytics-metric-card div.metric-data {
+    text-align: center !important;
+    width: 100% !important;
+}
+
+/* AI Module Cards - FORCE CENTER */
+.ai-module-card .ai-module-icon,
+div.ai-module-card div.ai-module-icon {
+    width: 70px !important;
+    height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.ai-module-card .ai-module-icon i,
+div.ai-module-card div.ai-module-icon i {
+    font-size: 2.25rem !important;
+}
+
+/* Status Stat Cards - FORCE CENTER */
+.status-stat-card,
+div.status-stat-card {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.status-stat-card .status-stat-icon,
+div.status-stat-card div.status-stat-icon {
+    width: 52px !important;
+    height: 52px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1rem auto !important;
+}
+
+.status-stat-card .status-stat-icon i,
+div.status-stat-card div.status-stat-icon i {
+    font-size: 1.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.status-stat-card .stat-value,
+.status-stat-card .stat-label,
+div.status-stat-card div.stat-value,
+div.status-stat-card div.stat-label {
+    text-align: center !important;
+    width: 100% !important;
+}
+
+/* System Metric Cards - FORCE CENTER */
+.system-metric,
+div.system-metric {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.system-metric .metric-icon,
+div.system-metric div.metric-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.25rem auto !important;
+}
+
+/* AI Control Cards - FORCE CENTER */
+.ai-control-card,
+div.ai-control-card {
+    text-align: center !important;
+}
+
+/* Ensure ALL Font Awesome Icons Are Centered */
+i.fas,
+i.fa,
+i.fa-solid,
+i[class*="fa-"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+/* NUMBER FORMATTING - Hide long decimals visually */
+.stat-value,
+.ai-metric-value,
+.driver-stat-value,
+div.stat-value,
+div.ai-metric-value,
+div.driver-stat-value {
+    /* Ensure proper display */
+    color: inherit !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    
+    /* Better rendering */
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.02em !important;
+}
+
+/* Center all text in metric cards */
+.stat-label,
+.metric-label,
+.ai-metric-label,
+div.stat-label,
+div.metric-label,
+div.ai-metric-label {
+    text-align: center !important;
+    width: 100% !important;
+}
+
+/* GLOBAL CARD CENTERING - FINAL OVERRIDE */
+.glass-card.stat-card,
+.glass-card.dashboard-metric-card,
+.glass-card.fleet-stat-card,
+.glass-card.analytics-metric-card,
+div.glass-card.stat-card,
+div.glass-card.dashboard-metric-card,
+div.glass-card.fleet-stat-card,
+div.glass-card.analytics-metric-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+}
+
+/* Ensure inline-style icons also get centered */
+[style*="width: 64px"],
+[style*="width: 70px"],
+[style*="width: 80px"],
+[style*="width: 52px"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Additional specificity for inline styles */
+[style*="display: flex"] .stat-icon,
+[style*="display: flex"] .metric-icon,
+[style*="display: grid"] .stat-icon,
+[style*="display: grid"] .metric-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Force center on page visibility change */
+@media (prefers-reduced-motion: no-preference) {
+    .stat-icon, .metric-icon, .ai-module-icon {
+        animation: ensure-centered 0.1s ease-in-out;
+    }
+}
+
+@keyframes ensure-centered {
+    0%, 100% {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* CACHE BUSTING - Version marker */
+body::before {
+    content: "Icon Fix v2.1" !important;
+    display: none !important;
+}
+
+/* END OF FINAL ICON CENTERING FIX */

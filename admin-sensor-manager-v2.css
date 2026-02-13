@@ -1,0 +1,366 @@
+/* admin-sensor-manager-v2.css - Modern, Clean Styling */
+
+/* Sensor Table */
+.admin-sensor-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.admin-sensor-table thead tr {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.admin-sensor-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-sensor-table th:last-child {
+    text-align: center;
+}
+
+/* Sensor Row */
+.sensor-row {
+    border-bottom: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.sensor-row:hover {
+    background: #f8fafc;
+    transform: translateX(2px);
+}
+
+.sensor-row:last-child {
+    border-bottom: none;
+}
+
+/* Table Cells */
+.sensor-row td {
+    padding: 1rem;
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.cell-index {
+    color: #64748b;
+    font-weight: 600;
+    width: 50px;
+}
+
+.cell-sensor {
+    min-width: 200px;
+}
+
+.sensor-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.sensor-imei {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-family: 'Courier New', monospace;
+}
+
+.cell-status {
+    width: 120px;
+}
+
+.cell-bin {
+    min-width: 200px;
+}
+
+.cell-battery {
+    color: #64748b;
+    font-weight: 600;
+    width: 100px;
+}
+
+.cell-last-seen {
+    color: #64748b;
+    width: 150px;
+}
+
+.cell-actions {
+    text-align: center;
+    width: 200px;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.status-badge i {
+    font-size: 0.5rem;
+}
+
+.status-online {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.status-offline {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Bin Info */
+.bin-not-linked {
+    color: #94a3b8;
+    font-style: italic;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bin-not-linked i {
+    font-size: 0.65rem;
+    opacity: 0.5;
+}
+
+.bin-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.bin-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bin-header i:first-child {
+    color: #3b82f6;
+}
+
+.bin-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.fill-icon {
+    font-size: 0.7rem;
+}
+
+.fill-icon.fill-success {
+    color: #10b981;
+}
+
+.fill-icon.fill-warning {
+    color: #f59e0b;
+}
+
+.fill-icon.fill-danger {
+    color: #ef4444;
+}
+
+.bin-address {
+    font-size: 0.75rem;
+    color: #64748b;
+    padding-left: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.bin-address i {
+    font-size: 0.6rem;
+}
+
+.bin-fill {
+    font-size: 0.75rem;
+    color: #64748b;
+    padding-left: 1.25rem;
+}
+
+.fill-level {
+    font-weight: 600;
+}
+
+.fill-level.fill-success {
+    color: #10b981;
+}
+
+.fill-level.fill-warning {
+    color: #f59e0b;
+}
+
+.fill-level.fill-danger {
+    color: #ef4444;
+}
+
+.bin-id {
+    color: #3b82f6;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-unlink,
+.btn-manage {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-unlink {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.btn-unlink:hover {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+}
+
+.btn-unlink:active {
+    transform: translateY(0);
+}
+
+.btn-manage {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-manage:hover {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+}
+
+.btn-manage:active {
+    transform: translateY(0);
+}
+
+/* Empty State */
+.empty-state {
+    padding: 3rem 2rem !important;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 1rem 0;
+    font-size: 1.1rem;
+}
+
+.empty-state button {
+    margin-top: 1rem;
+}
+
+/* Loading State */
+.loading-state {
+    padding: 3rem 2rem !important;
+    text-align: center;
+    color: #64748b;
+}
+
+.loading-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Primary Button Style */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-unlink,
+    .btn-manage {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-sensor-table {
+        font-size: 0.85rem;
+    }
+    
+    .admin-sensor-table th,
+    .sensor-row td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .sensor-name {
+        font-size: 0.9rem;
+    }
+    
+    .sensor-imei {
+        font-size: 0.75rem;
+    }
+}

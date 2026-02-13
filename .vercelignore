@@ -1,0 +1,28 @@
+# Dependencies (Vercel installs from package.json)
+node_modules
+
+# Local env (use Vercel Dashboard env vars instead)
+.env
+.env.local
+.env.*.local
+
+# Backups and temp
+backups
+*.bat
+*.log
+logs
+
+# Docs and dev notes (optional – remove if you want them in repo)
+*.md
+!README.md
+
+# Tests
+**/__tests__
+**/*.test.js
+**/*.spec.js
+coverage
+jest.config.js
+
+# Git
+.git
+.gitignore

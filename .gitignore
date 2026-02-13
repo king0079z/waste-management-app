@@ -1,0 +1,16 @@
+# Dependencies
+node_modules
+
+# Local env (never commit secrets)
+.env
+.env.local
+.env.*.local
+render-findy-env-copy.txt
+
+# Vercel
+.vercel
+
+# Backups and logs
+backups/
+*.log
+logs/

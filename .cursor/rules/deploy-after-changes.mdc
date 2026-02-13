@@ -1,0 +1,20 @@
+---
+description: After code changes, commit and push to GitHub so the app can be redeployed on Render
+alwaysApply: true
+---
+
+# Deploy workflow: local + GitHub
+
+Whenever you modify any project files (code, config, or docs) in this repo:
+
+1. **Local**: Edits are already applied in the workspace.
+2. **GitHub**: Before finishing your response, run:
+   - `git add` the changed files (or `git add -A` for all)
+   - `git commit -m "Brief description of the change"`
+   - `git push origin main`
+
+Use PowerShell-compatible commands (e.g. `Set-Location "path"; git add ...` — no `&&`).
+
+This keeps the repo on GitHub in sync so the user can redeploy directly on Render (auto-deploy from `main` or manual deploy).
+
+**Exception**: Do not commit secrets, `.env`, or files listed in `.gitignore`. Only commit safe project files.
