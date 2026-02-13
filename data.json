@@ -62,7 +62,7 @@
       "fuelEfficiency": 81,
       "fuelLevel": 72,
       "lastActive": "2026-02-13T15:00:18.173Z",
-      "lastLocationUpdate": "2026-02-13T17:23:17.017Z",
+      "lastLocationUpdate": "2026-02-13T20:56:51.466Z",
       "lastLogin": null,
       "lastSpeed": 0,
       "lastUpdate": "2026-02-11T17:38:15.087Z",
@@ -86,27 +86,27 @@
       "id": "USR-1770376041690-25",
       "createdAt": "2026-02-06T11:07:21.690Z",
       "currentLocation": {
-        "lat": 25.199292370783592,
-        "lng": 51.54733418927982
+        "lat": 25.200232938749867,
+        "lng": 51.54770085656987
       },
-      "efficiency": 86,
+      "efficiency": 97,
       "email": "king0079z@hotmail.com",
-      "fuelEfficiency": 84,
+      "fuelEfficiency": 92,
       "fuelLevel": 58,
-      "lastActive": "2026-02-13T15:00:18.176Z",
+      "lastActive": "2026-02-13T20:53:37.641Z",
       "lastFuelUpdate": "2026-02-10T15:34:44.308Z",
-      "lastLocationUpdate": "2026-02-13T20:32:10.753Z",
+      "lastLocationUpdate": "2026-02-13T20:55:51.609Z",
       "lastLogin": "2026-02-13T14:55:48.744Z",
       "lastSpeed": 0,
       "lastStatusUpdate": "2026-02-13T17:23:58.592Z",
-      "lastUpdate": "2026-02-13T17:23:58.605Z",
+      "lastUpdate": "2026-02-13T20:56:30.346Z",
       "license": "",
       "movementStatus": "stationary",
       "name": "mohamed khaled",
-      "onTimeDelivery": 94,
+      "onTimeDelivery": 97,
       "password": "a5013463@",
       "phone": "55608507",
-      "rating": 4.662289856361789,
+      "rating": 4.5,
       "status": "active",
       "totalCollections": 98,
       "type": "driver",
@@ -129,7 +129,7 @@
       "fuelLevel": 85,
       "lastActive": "2026-02-13T15:00:18.172Z",
       "lastFuelUpdate": "2025-12-14T11:44:47.028Z",
-      "lastLocationUpdate": "2026-02-13T17:23:17.020Z",
+      "lastLocationUpdate": "2026-02-13T20:56:51.472Z",
       "lastLogin": "2026-02-12T03:35:50.992Z",
       "lastSpeed": 0,
       "lastStatusUpdate": "2026-02-12T03:35:54.132Z",
@@ -157,7 +157,7 @@
       "email": "mohammedaboubakr@outlook.com",
       "fuelEfficiency": 81,
       "lastActive": "2026-02-13T15:00:18.174Z",
-      "lastLocationUpdate": "2026-02-13T17:23:17.022Z",
+      "lastLocationUpdate": "2026-02-13T20:56:51.480Z",
       "lastSpeed": 0,
       "lastUpdate": "2026-02-12T04:01:56.512Z",
       "movementStatus": "stationary",
@@ -191,7 +191,7 @@
       "fill": 48,
       "fillLevel": 48,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T16:46:49.318Z",
+      "lastUpdate": "2026-02-13T20:07:04.498Z",
       "lat": 25.2762048746414,
       "lng": 51.522844808183905,
       "location": "Souq Waqif Market Area",
@@ -209,7 +209,7 @@
       "temperature": 25,
       "type": "glass",
       "utilization": 63,
-      "lastUpdated": "2026-02-13T17:15:19.632Z",
+      "lastUpdated": "2026-02-13T20:53:37.495Z",
       "locationName": "Souq Waqif Market Area"
     },
     {
@@ -221,7 +221,7 @@
       "fill": 41,
       "fillLevel": 41,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:04:20.299Z",
+      "lastUpdate": "2026-02-13T20:24:05.429Z",
       "lat": 25.248525551071047,
       "lng": 51.51951907902708,
       "location": "Al Corniche Waterfront",
@@ -240,7 +240,7 @@
       "type": "mixed",
       "utilization": 60,
       "locationName": "Al Corniche Waterfront",
-      "lastUpdated": "2026-02-13T15:00:18.103Z",
+      "lastUpdated": "2026-02-13T20:53:37.523Z",
       "assignedAt": "2026-02-11T04:28:02.913Z",
       "assignedDriver": "USR-1770376041690-25",
       "assignedDriverName": "mohamed khaled"
@@ -254,7 +254,7 @@
       "fill": 30,
       "fillLevel": 30,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:10:53.525Z",
+      "lastUpdate": "2026-02-13T19:56:04.784Z",
       "lat": 25.278977492945707,
       "lng": 51.48927210341995,
       "location": "Museum of Islamic Art",
@@ -273,7 +273,7 @@
       "type": "plastic",
       "utilization": 80,
       "locationName": "Museum of Islamic Art",
-      "lastUpdated": "2026-02-13T15:00:18.110Z",
+      "lastUpdated": "2026-02-13T20:53:37.535Z",
       "assignedAt": "2026-02-12T04:02:28.438Z",
       "assignedDriver": "USR-1770376041690-25",
       "assignedDriverName": "mohamed khaled"
@@ -287,7 +287,7 @@
       "fill": 98,
       "fillLevel": 98,
       "lastCollection": "2/11/2026, 8:30:16 AM",
-      "lastUpdate": "2026-02-13T14:28:41.571Z",
+      "lastUpdate": "2026-02-13T20:35:54.978Z",
       "lat": 25.240308999041897,
       "lng": 51.57840804010699,
       "location": "Aspire Zone Complex",
@@ -306,7 +306,7 @@
       "type": "mixed",
       "utilization": 95,
       "locationName": "Aspire Zone Complex",
-      "lastUpdated": "2026-02-13T15:00:18.118Z",
+      "lastUpdated": "2026-02-13T20:53:37.565Z",
       "assignedAt": "2026-02-10T15:36:19.707Z",
       "assignedDriver": "USR-1770376041690-25",
       "assignedDriverName": "mohamed khaled",
@@ -321,7 +321,7 @@
       "fill": 60,
       "fillLevel": 60,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:32:28.905Z",
+      "lastUpdate": "2026-02-13T20:28:47.425Z",
       "lat": 25.29019776076709,
       "lng": 51.541567430645664,
       "location": "Msheireb Downtown",
@@ -340,7 +340,7 @@
       "type": "metal",
       "utilization": 79,
       "locationName": "Msheireb Downtown",
-      "lastUpdated": "2026-02-13T15:00:18.126Z"
+      "lastUpdated": "2026-02-13T20:53:37.571Z"
     },
     {
       "id": "DF703-006",
@@ -351,7 +351,7 @@
       "fill": 51,
       "fillLevel": 51,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:43:05.998Z",
+      "lastUpdate": "2026-02-13T20:11:43.313Z",
       "lat": 25.244480370769146,
       "lng": 51.57614416169937,
       "location": "Villaggio Mall Area",
@@ -370,7 +370,7 @@
       "type": "mixed",
       "utilization": 71,
       "locationName": "Villaggio Mall Area",
-      "lastUpdated": "2026-02-13T15:00:18.134Z"
+      "lastUpdated": "2026-02-13T20:53:37.578Z"
     },
     {
       "id": "DF703-007",
@@ -381,7 +381,7 @@
       "fill": 16,
       "fillLevel": 16,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:32:50.462Z",
+      "lastUpdate": "2026-02-13T19:55:32.157Z",
       "lat": 25.249226018475223,
       "lng": 51.5493488723389,
       "location": "City Center Doha",
@@ -400,7 +400,7 @@
       "type": "mixed",
       "utilization": 89,
       "locationName": "City Center Doha",
-      "lastUpdated": "2026-02-13T15:00:18.142Z"
+      "lastUpdated": "2026-02-13T20:53:37.588Z"
     },
     {
       "id": "DF703-008",
@@ -411,7 +411,7 @@
       "fill": 21,
       "fillLevel": 21,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:25:58.227Z",
+      "lastUpdate": "2026-02-13T20:36:42.016Z",
       "lat": 25.277331992041773,
       "lng": 51.536669042786734,
       "location": "Al Bidda Park",
@@ -430,7 +430,7 @@
       "type": "glass",
       "utilization": 80,
       "locationName": "Al Bidda Park",
-      "lastUpdated": "2026-02-13T15:00:18.150Z"
+      "lastUpdated": "2026-02-13T20:53:37.598Z"
     },
     {
       "id": "DF703-010",
@@ -441,7 +441,7 @@
       "fill": 77,
       "fillLevel": 77,
       "lastCollection": "Never",
-      "lastUpdate": "2026-02-13T14:09:31.839Z",
+      "lastUpdate": "2026-02-13T20:35:34.426Z",
       "lat": 25.259971500219624,
       "lng": 51.528707369385934,
       "location": "Katara Village",
@@ -460,7 +460,7 @@
       "type": "mixed",
       "utilization": 62,
       "locationName": "Katara Village",
-      "lastUpdated": "2026-02-13T15:00:18.155Z"
+      "lastUpdated": "2026-02-13T20:53:37.604Z"
     },
     {
       "id": "BIN-001",
@@ -486,15 +486,15 @@
       "fillLevel": 23,
       "lastUpdated": "2026-02-11T04:57:45.215Z",
       "sensorId": "865456053885594",
-      "lastSensorUpdate": "2026-02-13T20:35:04.195Z",
+      "lastSensorUpdate": "2026-02-13T20:56:31.482Z",
       "sensorData": {
         "imei": "865456053885594",
-        "battery": 73,
+        "battery": 72,
         "temperature": 48,
         "signal": 0,
         "fillLevel": 23,
         "distanceCm": 154,
-        "lastSeen": "2026-02-13T20:35:03.921Z",
+        "lastSeen": "2026-02-13T20:56:30.838Z",
         "status": "online",
         "location": {
           "lat": 25.163,
@@ -503,7 +503,7 @@
         }
       },
       "gpsSource": "GPS",
-      "gpsUpdated": "2026-02-13T20:35:04.195Z",
+      "gpsUpdated": "2026-02-13T20:56:31.482Z",
       "collectedBy": "mohamed khaled",
       "locationName": "شارع 4, منطقة صناعية جديدة, الريان, قطر"
     }
@@ -4904,7 +4904,7 @@
       "ago": "20494 12 3",
       "ago_gps": " 2 39",
       "alarm": "0",
-      "battery": 73,
+      "battery": 72,
       "batteryLevel": "50",
       "binId": "BIN-001",
       "country": null,
@@ -4955,8 +4955,8 @@
       "inmode": null,
       "lastModTime": null,
       "lastReportType": "gps",
-      "lastSeen": "2026-02-13T20:35:03.921Z",
-      "lastUpdate": "2026-02-13T20:35:04.141Z",
+      "lastSeen": "2026-02-13T20:56:30.838Z",
+      "lastUpdate": "2026-02-13T20:56:31.457Z",
       "lat": 25.2004,
       "liveSetTime": "2026-01-24 20:52:45",
       "lng": 51.5479,
@@ -7219,10 +7219,10 @@
   "pendingRegistrations": [],
   "driverLocations": {
     "USR-1770376041690-25": {
-      "lat": 25.200915156224678,
-      "lng": 51.5476715120826,
-      "timestamp": "2026-02-13T17:31:58.268Z",
-      "accuracy": 40,
+      "lat": 25.200232938749867,
+      "lng": 51.54770085656987,
+      "timestamp": "2026-02-13T20:56:30.307Z",
+      "accuracy": 145,
       "speed": 0
     }
   },
@@ -7231,6 +7231,6 @@
     "DF703-003"
   ],
   "initialized": true,
-  "lastUpdate": "2026-02-13T20:35:09.660Z",
-  "lastSync": "2026-02-13T20:35:09.660Z"
+  "lastUpdate": "2026-02-13T20:56:59.053Z",
+  "lastSync": "2026-02-13T20:56:59.053Z"
 }
