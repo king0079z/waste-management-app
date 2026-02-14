@@ -1578,15 +1578,6 @@
                         </div>
                     </div>
 
-                    <div id="driverTodaysSummaryCard" class="driver-todays-summary-card" style="display: none; margin-bottom: 1rem; padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.9) 100%); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <i class="fas fa-bullseye" style="color: #60a5fa; font-size: 1.25rem;"></i>
-                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #f1f5f9;">Today's goal</h4>
-                        </div>
-                        <div id="driverTodaysSummaryText" style="font-size: 0.95rem; color: #cbd5e1;">— bins to collect • — done • — remaining</div>
-                        <div id="driverTodaysSummaryNext" style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.35rem;"></div>
-                    </div>
-
                     <div class="driver-stats-grid">
                         <div class="driver-stat-card">
                             <i class="fas fa-route driver-stat-icon"></i>
@@ -2020,11 +2011,6 @@
 
     <!-- Main Container -->
     <div class="container" id="mainContainer" style="display: none;">
-        <!-- Sync error banner (#22) - hidden by default -->
-        <div id="syncErrorBanner" class="sync-error-banner" style="display: none; padding: 0.75rem 1rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; margin-bottom: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-            <span><i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> <span id="syncErrorBannerText">Sync failed.</span></span>
-            <button type="button" class="btn btn-sm" id="syncErrorBannerRetry" style="background: #ef4444; color: white; border: none;">Retry</button>
-        </div>
         <!-- City Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <h1 style="font-size: 2.5rem; margin-bottom: 2rem; background: linear-gradient(135deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -2134,17 +2120,6 @@
                 <h1 class="monitoring-title">Live Monitoring System</h1>
                 <span class="live-badge" aria-live="polite"><span class="live-dot"></span>LIVE</span>
             </header>
-            
-            <!-- #12 Quick filters for map -->
-            <div id="monitoringMapFilters" class="monitoring-map-filters" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1rem; padding: 0.75rem 1rem; background: rgba(15,23,42,0.6); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-                <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 600;">Filters:</span>
-                <select id="monitoringFilterFill" class="form-input" style="width: auto; min-width: 110px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Fill level"><option value="all">All fill levels</option><option value="50">&gt;50%</option><option value="80">&gt;80%</option><option value="90">Critical (&gt;90%)</option></select>
-                <select id="monitoringFilterSensor" class="form-input" style="width: auto; min-width: 110px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Has sensor"><option value="all">All sensors</option><option value="yes">Has sensor</option><option value="no">No sensor</option></select>
-                <select id="monitoringFilterAssigned" class="form-input" style="width: auto; min-width: 120px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Assigned"><option value="all">All</option><option value="assigned">Assigned</option><option value="unassigned">Unassigned</option></select>
-                <select id="monitoringFilterDriver" class="form-input" style="width: auto; min-width: 140px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Driver"><option value="">All drivers</option></select>
-                <button type="button" class="btn btn-sm btn-secondary" id="monitoringFilterApply" style="padding: 0.4rem 0.75rem;"><i class="fas fa-filter"></i> Apply</button>
-                <button type="button" class="btn btn-sm" id="monitoringFilterClear" style="padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.1); color: #94a3b8;">Clear</button>
-            </div>
             
             <!-- Map Container -->
             <div class="map-container">
@@ -5236,7 +5211,6 @@
                 <div id="selectedBinsPreview" class="selected-bins-preview">
                     <p style="text-align: center; color: #94a3b8; padding: 2rem;">No bins selected yet. Choose from AI recommendations or browse all available bins above.</p>
                 </div>
-                <div id="selectedBinsList" class="selected-bins-list" style="margin-top: 0.75rem; max-height: 200px; overflow-y: auto;"></div>
             </div>
 
             <!-- Action Buttons -->
@@ -5950,7 +5924,7 @@
             <!-- Selected Bins -->
             <div class="glass-card" style="margin-top: 1rem;">
                 <h3 style="margin-bottom: 1rem;">Selected Bins for Route</h3>
-                <div id="simpleRouteSelectedBinsList">
+                <div id="selectedBinsList">
                     <p style="text-align: center; color: #94a3b8;">No bins selected</p>
                 </div>
             </div>

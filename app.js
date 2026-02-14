@@ -132,44 +132,6 @@ class WasteManagementApp {
                 }
             });
         });
-
-        // #22: Sync error banner – listen for sync failures and retry button
-        window.addEventListener('syncError', (e) => {
-            const msg = (e.detail && e.detail.message) ? e.detail.message : 'Sync failed.';
-            this.showSyncError(true, msg);
-        });
-        window.addEventListener('syncSuccess', () => this.showSyncError(false));
-        const syncRetryBtn = document.getElementById('syncErrorBannerRetry');
-        if (syncRetryBtn) {
-            syncRetryBtn.addEventListener('click', () => {
-                this.showSyncError(false);
-                if (typeof syncManager !== 'undefined' && typeof syncManager.performFullSync === 'function') {
-                    syncManager.performFullSync().then(ok => { if (!ok) this.showSyncError(true, 'Retry failed.'); });
-                }
-            });
-        }
-
-        // #12 Monitoring map filters: Apply and Clear
-        const monitoringFilterApply = document.getElementById('monitoringFilterApply');
-        const monitoringFilterClear = document.getElementById('monitoringFilterClear');
-        if (monitoringFilterApply) {
-            monitoringFilterApply.addEventListener('click', () => {
-                if (typeof mapManager !== 'undefined' && mapManager.loadBinsOnMap) mapManager.loadBinsOnMap(true);
-            });
-        }
-        if (monitoringFilterClear) {
-            monitoringFilterClear.addEventListener('click', () => {
-                const fillEl = document.getElementById('monitoringFilterFill');
-                const sensorEl = document.getElementById('monitoringFilterSensor');
-                const assignedEl = document.getElementById('monitoringFilterAssigned');
-                const driverEl = document.getElementById('monitoringFilterDriver');
-                if (fillEl) fillEl.value = 'all';
-                if (sensorEl) sensorEl.value = 'all';
-                if (assignedEl) assignedEl.value = 'all';
-                if (driverEl) driverEl.value = '';
-                if (typeof mapManager !== 'undefined' && mapManager.loadBinsOnMap) mapManager.loadBinsOnMap(true);
-            });
-        }
         
         // Setup analytics tabs
         document.addEventListener('click', (e) => {
@@ -814,35 +776,6 @@ class WasteManagementApp {
             completedToday.textContent = completedRoutes.length;
         } else {
             console.log('📊 completedToday element not found - skipping update');
-        }
-
-        // Today's summary card (#15): X bins to collect, Y done, Z remaining
-        const summaryCard = document.getElementById('driverTodaysSummaryCard');
-        const summaryText = document.getElementById('driverTodaysSummaryText');
-        const summaryNext = document.getElementById('driverTodaysSummaryNext');
-        if (summaryCard && summaryText) {
-            const toCollect = activeRoutes.reduce((sum, r) => sum + (r.binIds?.length || r.bins?.length || (r.binDetails && r.binDetails.length) || (r.binId ? 1 : 0)), 0);
-            const todayStart = new Date();
-            todayStart.setHours(0, 0, 0, 0);
-            const collectionsToday = (dataManager.getCollections() || []).filter(c => c.driverId === currentUser.id && new Date(c.timestamp) >= todayStart);
-            const done = collectionsToday.length;
-            const remaining = Math.max(0, toCollect - done);
-            if (activeRoutes.length > 0) {
-                summaryCard.style.display = 'block';
-                summaryText.textContent = `${toCollect} bins to collect • ${done} done • ${remaining} remaining`;
-                if (summaryNext) {
-                    const firstRoute = activeRoutes[0];
-                    const firstBinId = firstRoute.binIds?.[0] || firstRoute.binId || firstRoute.binDetails?.[0]?.id;
-                    const firstBin = firstBinId && dataManager.getBinById ? dataManager.getBinById(firstBinId) : null;
-                    if (firstBinId) {
-                        summaryNext.textContent = firstBin ? `Next: ${firstBin.id}${firstBin.location || firstBin.locationName ? ' • ' + (firstBin.locationName || (typeof firstBin.location === 'string' ? firstBin.location : firstBin.location?.address) || '') : ''}` : `Next: ${firstBinId}`;
-                    } else {
-                        summaryNext.textContent = '';
-                    }
-                }
-            } else {
-                summaryCard.style.display = 'none';
-            }
         }
         
         if (activeRoutes.length === 0) {
@@ -1586,15 +1519,6 @@ class WasteManagementApp {
 
     loadMonitoring() {
         console.log('🔄 Loading monitoring section...');
-        
-        // #12 Populate monitoring driver filter dropdown
-        const driverFilter = document.getElementById('monitoringFilterDriver');
-        if (driverFilter && typeof dataManager !== 'undefined') {
-            const drivers = (dataManager.getUsers() || []).filter(u => u.type === 'driver');
-            const currentValue = driverFilter.value;
-            driverFilter.innerHTML = '<option value="">All drivers</option>' + drivers.map(d => `<option value="${(d.id || '').replace(/"/g, '&quot;')}">${(d.name || d.username || d.id || 'Driver').replace(/</g, '&lt;')}</option>`).join('');
-            if (currentValue) driverFilter.value = currentValue;
-        }
         
         // Initialize map (if not already initialized)
         this.initializeMapIfNeeded();
@@ -2417,15 +2341,6 @@ class WasteManagementApp {
                 this.dismissToast(alertId);
             }, duration);
         }
-    }
-
-    /** #22: Show or hide the global sync error banner (Sync failed – Retry?) */
-    showSyncError(show, message = 'Sync failed.') {
-        const el = document.getElementById('syncErrorBanner');
-        const textEl = document.getElementById('syncErrorBannerText');
-        if (!el) return;
-        if (textEl) textEl.textContent = message || 'Sync failed.';
-        el.style.display = show ? 'flex' : 'none';
     }
 
     dismissToast(alertId) {

@@ -166,18 +166,18 @@ class SyncManager {
         }
     }
 
-    // Sync all data from server to local. options: { force: true } to skip throttle (e.g. wake-from-sleep), { timeoutMs: 2500 } for shorter fetch timeout.
-    async syncFromServer(options) {
+    // Sync all data from server to local
+    async syncFromServer() {
         if (!this.syncEnabled || !this.isOnline) return;
         
+        // ENHANCED: Prevent concurrent syncing
         if (this.isSyncing) {
             return false;
         }
         
+        // Throttle: Skip if we synced recently
         const now = Date.now();
-        const force = options && options.force === true;
-        const timeoutMs = (options && options.timeoutMs) || 8000;
-        if (!force && now - this.lastSyncFromServer < this.minSyncInterval) {
+        if (now - this.lastSyncFromServer < this.minSyncInterval) {
             return false;
         }
         
@@ -188,9 +188,10 @@ class SyncManager {
         try {
             console.log('📥 Syncing from server...');
             
+            // Enhanced connection health check with timeout
             const startTime = Date.now();
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
             
             const response = await fetch(`${this.baseUrl}/api/data/sync`, {
                 method: 'GET',
@@ -411,7 +412,6 @@ class SyncManager {
             console.error('❌ Sync from server failed:', error.message);
             this.updateConnectionHealth(false, 0);
             this.handleSyncError();
-            try { window.dispatchEvent(new CustomEvent('syncError', { detail: { message: error.message } })); } catch (e) {}
             return false;
         } finally {
             this.isSyncing = false;
@@ -586,7 +586,6 @@ class SyncManager {
             console.error('❌ Sync to server failed:', error.message);
             this.addToPendingUpdates(data, updateType);
             this.handleSyncError();
-            try { window.dispatchEvent(new CustomEvent('syncError', { detail: { message: error.message } })); } catch (e) {}
             return false;
         } finally {
             // Release the lock
@@ -833,12 +832,8 @@ class SyncManager {
         };
         
         const uploadSuccess = await this.syncToServer(localData, 'full');
-        const ok = serverSyncSuccess && uploadSuccess;
-        try {
-            if (ok) window.dispatchEvent(new CustomEvent('syncSuccess'));
-            else window.dispatchEvent(new CustomEvent('syncError', { detail: { message: 'Full sync failed.' } }));
-        } catch (e) {}
-        return ok;
+        
+        return serverSyncSuccess && uploadSuccess;
     }
 
     // Get sync status for UI

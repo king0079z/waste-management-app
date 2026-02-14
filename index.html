@@ -11,8 +11,6 @@
     <meta name="referrer" content="no-referrer-when-downgrade">
     <meta name="credential-manager" content="disabled">
     <meta name="password-manager" content="disabled">
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
     
     <!-- Font Awesome CDN with Multiple Fallbacks -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -1191,41 +1189,6 @@
     <link rel="stylesheet" href="admin-sensor-table-styles.css">
 </head>
 <body>
-    <!-- Mobile wake: tap-to-reload when app was in background long (runs first, no dependencies) -->
-    <script>
-(function(){
-var _lastHidden = 0;
-// Suppress known browser-extension promise error so it doesn't show as "Uncaught" or block UI
-window.addEventListener('unhandledrejection', function(e) {
-    var msg = (e.reason && (e.reason.message || String(e.reason))) || '';
-    if (msg.indexOf('message channel closed') !== -1 || msg.indexOf('asynchronous response') !== -1) {
-        e.preventDefault();
-        e.stopPropagation();
-        return true;
-    }
-}, true);
-function doReload() {
-    try { window.location.reload(); } catch (_) {}
-    window.location.href = window.location.href;
-}
-function showReloadOverlay(){
-    if(document.getElementById('mobile-wake-reload-overlay')) return;
-    var o = document.createElement('div');
-    o.id = 'mobile-wake-reload-overlay';
-    o.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,0.95);display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent;';
-    o.innerHTML = '<div style="text-align:center;color:#fff;padding:24px;max-width:320px;"><p style="font-size:1.15rem;margin:0 0 8px;font-weight:600;">App unresponsive?</p><p style="font-size:0.95rem;margin:0 0 20px;opacity:0.9;">Tap the button below to reload</p><button type="button" style="padding:14px 28px;font-size:1rem;background:#3b82f6;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600;">Reload app</button></div>';
-    o.onclick = function(e){ if(e.target.tagName === 'BUTTON' || e.target === o) doReload(); };
-    document.body.appendChild(o);
-}
-document.addEventListener('visibilitychange', function(){
-    if(document.hidden) _lastHidden = Date.now();
-    else if(_lastHidden && (Date.now() - _lastHidden) > 12000) setTimeout(showReloadOverlay, 300);
-});
-window.addEventListener('pageshow', function(e){
-    if(_lastHidden && (Date.now() - _lastHidden) > 12000) setTimeout(showReloadOverlay, 300);
-});
-})();
-    </script>
     <!-- 🚀 Application Loading Screen -->
     <div id="app-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <div style="text-align: center;">
@@ -1514,16 +1477,6 @@ window.addEventListener('pageshow', function(e){
                             </div>
                             <div id="syncIndicator" class="driver-sync-dot"></div>
                         </div>
-                    </div>
-
-                    <!-- Today's summary: X to collect, Y done, Z remaining (world-class quick win #15) -->
-                    <div id="driverTodaysSummaryCard" class="driver-todays-summary-card" style="display: none; margin-bottom: 1rem; padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.9) 100%); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <i class="fas fa-bullseye" style="color: #60a5fa; font-size: 1.25rem;"></i>
-                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #f1f5f9;">Today's goal</h4>
-                        </div>
-                        <div id="driverTodaysSummaryText" style="font-size: 0.95rem; color: #cbd5e1;">— bins to collect • — done • — remaining</div>
-                        <div id="driverTodaysSummaryNext" style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.35rem;"></div>
                     </div>
 
                     <div class="driver-stats-grid">
@@ -1959,11 +1912,6 @@ window.addEventListener('pageshow', function(e){
 
     <!-- Main Container -->
     <div class="container" id="mainContainer" style="display: none;">
-        <!-- Sync error banner (#22 loading/error states) - hidden by default -->
-        <div id="syncErrorBanner" class="sync-error-banner" style="display: none; padding: 0.75rem 1rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; margin-bottom: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-            <span><i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> <span id="syncErrorBannerText">Sync failed.</span></span>
-            <button type="button" class="btn btn-sm" id="syncErrorBannerRetry" style="background: #ef4444; color: white; border: none;">Retry</button>
-        </div>
         <!-- City Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <h1 style="font-size: 2.5rem; margin-bottom: 2rem; background: linear-gradient(135deg, #fff 0%, #94a3b8 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -2073,33 +2021,6 @@ window.addEventListener('pageshow', function(e){
                 <h1 class="monitoring-title">Live Monitoring System</h1>
                 <span class="live-badge" aria-live="polite"><span class="live-dot"></span>LIVE</span>
             </header>
-            
-            <!-- #12 Quick filters for map -->
-            <div id="monitoringMapFilters" class="monitoring-map-filters" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1rem; padding: 0.75rem 1rem; background: rgba(15,23,42,0.6); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
-                <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 600;">Filters:</span>
-                <select id="monitoringFilterFill" class="form-input" style="width: auto; min-width: 110px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Fill level">
-                    <option value="all">All fill levels</option>
-                    <option value="50">&gt;50%</option>
-                    <option value="80">&gt;80%</option>
-                    <option value="90">Critical (&gt;90%)</option>
-                </select>
-                <select id="monitoringFilterSensor" class="form-input" style="width: auto; min-width: 110px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Has sensor">
-                    <option value="all">All sensors</option>
-                    <option value="yes">Has sensor</option>
-                    <option value="no">No sensor</option>
-                </select>
-                <select id="monitoringFilterAssigned" class="form-input" style="width: auto; min-width: 120px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Assigned to route">
-                    <option value="all">All</option>
-                    <option value="assigned">Assigned</option>
-                    <option value="unassigned">Unassigned</option>
-                </select>
-                <select id="monitoringFilterDriver" class="form-input" style="width: auto; min-width: 140px; padding: 0.4rem 0.6rem; font-size: 0.85rem;" title="Driver">
-                    <option value="">All drivers</option>
-                    <!-- Populated by JS -->
-                </select>
-                <button type="button" class="btn btn-sm btn-secondary" id="monitoringFilterApply" style="padding: 0.4rem 0.75rem;"><i class="fas fa-filter"></i> Apply</button>
-                <button type="button" class="btn btn-sm" id="monitoringFilterClear" style="padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.1); color: #94a3b8;">Clear</button>
-            </div>
             
             <!-- Map Container -->
             <div class="map-container">
@@ -5152,13 +5073,6 @@ window.addEventListener('pageshow', function(e){
                         <option value="low-priority">Low Priority (<50%)</option>
                     </select>
                 </div>
-                <!-- #8 Bulk actions toolbar -->
-                <div id="bulkBinsToolbar" class="bulk-bins-toolbar" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
-                    <button type="button" class="btn btn-sm btn-secondary" id="bulkSelectAllBins" onclick="typeof selectAllBinsInList==='function'&&selectAllBinsInList()" style="padding: 0.4rem 0.75rem;"><i class="fas fa-check-double"></i> Select all</button>
-                    <button type="button" class="btn btn-sm" id="bulkDeselectAllBins" onclick="typeof deselectAllBinsInList==='function'&&deselectAllBinsInList()" style="padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.1); color: #94a3b8;">Deselect all</button>
-                    <button type="button" class="btn btn-sm btn-secondary" id="bulkExportSelectedBins" onclick="typeof exportSelectedBinsCsv==='function'&&exportSelectedBinsCsv()" style="padding: 0.4rem 0.75rem;"><i class="fas fa-file-csv"></i> Export selected</button>
-                    <span id="bulkSelectedCount" style="color: #94a3b8; font-size: 0.85rem; margin-left: 0.5rem;"></span>
-                </div>
                 
                 <div id="availableBinsList" class="available-bins-list">
                     <!-- Will be populated dynamically -->
@@ -5198,7 +5112,6 @@ window.addEventListener('pageshow', function(e){
                 <div id="selectedBinsPreview" class="selected-bins-preview">
                     <p style="text-align: center; color: #94a3b8; padding: 2rem;">No bins selected yet. Choose from AI recommendations or browse all available bins above.</p>
                 </div>
-                <div id="selectedBinsList" class="selected-bins-list" style="margin-top: 0.75rem; max-height: 200px; overflow-y: auto;"></div>
             </div>
 
             <!-- Action Buttons -->
@@ -5948,7 +5861,7 @@ window.addEventListener('pageshow', function(e){
             <!-- Selected Bins -->
             <div class="glass-card" style="margin-top: 1rem;">
                 <h3 style="margin-bottom: 1rem;">Selected Bins for Route</h3>
-                <div id="simpleRouteSelectedBinsList">
+                <div id="selectedBinsList">
                     <p style="text-align: center; color: #94a3b8;">No bins selected</p>
                 </div>
             </div>

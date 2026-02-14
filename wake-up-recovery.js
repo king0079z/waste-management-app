@@ -11,10 +11,8 @@ class WakeUpRecoverySystem {
         this.activeIntervals = new Set();
         this.isRecovering = false;
         this.freezeThreshold = 60000;  // 60 seconds = full recovery
-        this.mobileBackgroundThreshold = 1000; // 1s hidden = run driver reconnection (phone lock) – world-class: react quickly
+        this.mobileBackgroundThreshold = 3000; // 3s hidden = run driver reconnection (phone lock)
         this.driverReconnectDebounce = 0;      // Avoid double-run when visibility + focus fire together
-        this.driverReconnectOverlay = null;    // Lightweight "Reconnecting..." overlay so app never feels frozen
-        this._reconnectOverlaySafetyTimer = null; // Always hide overlay after this time (avoid infinite "Reconnecting...")
         
         this.init();
     }
@@ -27,22 +25,16 @@ class WakeUpRecoverySystem {
             if (document.hidden) {
                 this.lastHiddenTime = Date.now();
             } else {
-                // Yield to main thread first so browser can repaint (avoids frozen feel)
-                const self = this;
-                setTimeout(function runWhenVisible() {
-                    self.reconnectDriverWhenVisible();
-                    self.checkForWakeUp();
-                }, 0);
+                // Page visible again (e.g. driver unlocked phone) – reconnect driver app immediately
+                this.reconnectDriverWhenVisible();
+                this.checkForWakeUp();
             }
         });
         
         // 2. Monitor page focus (also fires when returning to app)
         window.addEventListener('focus', () => {
-            const self = this;
-            setTimeout(function runOnFocus() {
-                self.reconnectDriverWhenVisible();
-                self.checkForWakeUp();
-            }, 0);
+            this.reconnectDriverWhenVisible();
+            this.checkForWakeUp();
         });
         
         // 3. Monitor online/offline status
@@ -53,12 +45,6 @@ class WakeUpRecoverySystem {
         
         window.addEventListener('offline', () => {
             console.log('📴 Network offline detected');
-        });
-        
-        // 3b. pageshow (mobile Safari/Android when returning to tab or from back-forward cache)
-        window.addEventListener('pageshow', () => {
-            const self = this;
-            setTimeout(function onPageShow() { self.reconnectDriverWhenVisible(); self.checkForWakeUp(); }, 0);
         });
         
         // 4. Heartbeat monitoring (detect long pauses)
@@ -89,130 +75,70 @@ class WakeUpRecoverySystem {
     checkForWakeUp() {
         const now = Date.now();
         const timeSinceLastCheck = now - this.lastActiveTime;
+        
+        // If more than threshold, trigger recovery
         if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering) {
             console.log(`🚨 Wake-up detected! Time gap: ${Math.round(timeSinceLastCheck / 1000)}s`);
             this.performRecovery('wake_from_sleep');
         }
+        
         this.lastActiveTime = now;
     }
     
     /**
-     * When ANY user (driver, admin, manager) returns from background, reconnect so the app never stays frozen.
-     * World-class: run for all account types; show "Reconnecting..." overlay and refresh data.
+     * When driver app returns from background (e.g. phone unlocked), reconnect to server immediately.
+     * Runs every time page becomes visible if user is a driver – keeps driver app working after lock.
      */
     reconnectDriverWhenVisible() {
         const now = Date.now();
         if (this.driverReconnectDebounce && (now - this.driverReconnectDebounce) < 2000) return;
         const auth = (typeof authManager !== 'undefined' && authManager != null && typeof authManager.getCurrentUser === 'function') ? authManager : null;
         const user = auth ? auth.getCurrentUser() : null;
+        if (!user || user.type !== 'driver') return;
+        // Run when driver brings app back after being in background (e.g. phone lock) for at least 3s
         const wasInBackground = this.lastHiddenTime > 0 && (now - this.lastHiddenTime) >= this.mobileBackgroundThreshold;
         if (!wasInBackground) return;
-        if (!user) return;
-
+        
         this.driverReconnectDebounce = now;
-        this.showDriverReconnectingOverlay();
-
-        const self = this;
-        const isDriver = user.type === 'driver';
-        let doneCalled = false;
-        const done = () => {
-            if (doneCalled) return;
-            doneCalled = true;
-            self.hideDriverReconnectingOverlay();
-        };
-
-        var WAKE_SYNC_TIMEOUT_MS = 2500;
-        setTimeout(function doReconnect() {
+        
+        const doReconnect = () => {
             try {
+                // 1. Reconnect WebSocket so driver is connected to server again
                 if (window.webSocketManager && typeof window.webSocketManager.reconnect === 'function') {
-                    window.webSocketManager.reconnect(true);
+                    window.webSocketManager.reconnect();
                 }
-                if (typeof window.updateWebSocketClientInfo === 'function') {
-                    setTimeout(function () { window.updateWebSocketClientInfo(); }, 400);
-                }
+                // 2. Full sync from server (routes, data)
                 if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
-                    var syncPromise = syncManager.syncFromServer({ force: true, timeoutMs: WAKE_SYNC_TIMEOUT_MS });
-                    var onDone = function () {
-                        if (isDriver && window.app && typeof window.app.loadDriverRoutes === 'function') {
+                    syncManager.syncFromServer().then(() => {
+                        if (window.app && typeof window.app.loadDriverRoutes === 'function') {
                             window.app.loadDriverRoutes();
                         }
-                        if (!isDriver && window.app) {
-                            if (typeof window.app.refreshDashboard === 'function') window.app.refreshDashboard();
-                            if (window.app.currentSection === 'admin' && typeof window.app.loadAdminPanel === 'function') window.app.loadAdminPanel();
-                            if (window.app.currentSection === 'monitoring' && window.mapManager && typeof window.mapManager.loadBinsOnMap === 'function') window.mapManager.loadBinsOnMap();
-                            if (window.app.currentSection === 'fleet' && window.fleetManager && typeof window.fleetManager.refresh === 'function') window.fleetManager.refresh();
+                    }).catch(() => {
+                        if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                            window.app.loadDriverRoutes();
                         }
-                        done();
-                    };
-                    if (syncPromise && typeof syncPromise.then === 'function') {
-                        var timeoutPromise = new Promise(function (resolve) {
-                            setTimeout(function () { resolve(); }, WAKE_SYNC_TIMEOUT_MS);
-                        });
-                        Promise.race([syncPromise, timeoutPromise]).then(onDone).catch(onDone);
-                    } else {
-                        onDone();
-                    }
-                } else {
-                    if (isDriver && window.app && typeof window.app.loadDriverRoutes === 'function') {
-                        window.app.loadDriverRoutes();
-                    }
-                    if (!isDriver && window.app) {
-                        if (typeof window.app.refreshDashboard === 'function') window.app.refreshDashboard();
-                        if (window.app.currentSection === 'admin' && typeof window.app.loadAdminPanel === 'function') window.app.loadAdminPanel();
-                        if (window.app.currentSection === 'monitoring' && window.mapManager && typeof window.mapManager.loadBinsOnMap === 'function') window.mapManager.loadBinsOnMap();
-                        if (window.app.currentSection === 'fleet' && window.fleetManager && typeof window.fleetManager.refresh === 'function') window.fleetManager.refresh();
-                    }
-                    done();
+                    });
+                } else if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                    window.app.loadDriverRoutes();
                 }
-                if (isDriver) {
-                    if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
-                        try { window.mapManager.startDriverTracking(); } catch (e) { }
-                    }
-                    if (user.id && window.enhancedMessaging && typeof window.enhancedMessaging.loadDriverMessages === 'function') {
-                        window.enhancedMessaging.loadDriverMessages(user.id);
-                    }
+                // 3. Re-identify WebSocket as driver (after a short delay so connection is up)
+                if (typeof window.updateWebSocketClientInfo === 'function') {
+                    setTimeout(() => { window.updateWebSocketClientInfo(); }, 800);
+                }
+                // 4. Restart GPS tracking so location is sent again
+                if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
+                    window.mapManager.startDriverTracking();
+                }
+                // 5. Refetch chat messages so driver sees new manager messages without refresh (mobile WebSocket can miss them)
+                if (user && user.id && window.enhancedMessaging && typeof window.enhancedMessaging.loadDriverMessages === 'function') {
+                    window.enhancedMessaging.loadDriverMessages(user.id);
                 }
             } catch (e) {
-                console.warn('Reconnection step failed:', e && e.message);
-                done();
+                console.warn('Driver reconnection step failed:', e && e.message);
             }
-        }, 100);
-    }
-    
-    showDriverReconnectingOverlay() {
-        if (this.driverReconnectOverlay) return;
-        const el = document.createElement('div');
-        el.id = 'driver-reconnecting-overlay';
-        el.setAttribute('aria-live', 'polite');
-        el.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.9);z-index:999998;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;';
-        el.innerHTML = '<div style="text-align:center;color:#fff;padding:24px;"><div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:driverReconnectSpin 0.8s linear infinite;margin:0 auto 12px;"></div><div style="font-size:1rem;font-weight:600;">Reconnecting...</div><div style="font-size:0.875rem;opacity:0.9;margin-top:4px;">Your app is updating</div><button type="button" id="driver-reload-app-btn" style="margin-top:20px;padding:12px 24px;font-size:0.95rem;background:rgba(59,130,246,0.9);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600;">Reload app</button></div>';
-        const style = document.createElement('style');
-        style.textContent = '@keyframes driverReconnectSpin{to{transform:rotate(360deg);}}';
-        document.head.appendChild(style);
-        document.body.appendChild(el);
-        const btn = el.querySelector('#driver-reload-app-btn');
-        if (btn) btn.addEventListener('click', function() {
-            try { window.location.reload(); } catch (_) {}
-            window.location.href = window.location.href;
-        });
-        this.driverReconnectOverlay = el;
-        var self = this;
-        if (this._reconnectOverlaySafetyTimer) clearTimeout(this._reconnectOverlaySafetyTimer);
-        this._reconnectOverlaySafetyTimer = setTimeout(function() {
-            self._reconnectOverlaySafetyTimer = null;
-            self.hideDriverReconnectingOverlay();
-        }, 5000);
-    }
-    
-    hideDriverReconnectingOverlay() {
-        if (this._reconnectOverlaySafetyTimer) {
-            clearTimeout(this._reconnectOverlaySafetyTimer);
-            this._reconnectOverlaySafetyTimer = null;
-        }
-        if (this.driverReconnectOverlay && this.driverReconnectOverlay.parentNode) {
-            this.driverReconnectOverlay.remove();
-        }
-        this.driverReconnectOverlay = null;
+        };
+        
+        doReconnect();
     }
     
     async performRecovery(reason = 'unknown') {
@@ -228,18 +154,22 @@ class WakeUpRecoverySystem {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         
         try {
+            // Show recovery notification
             this.showRecoveryNotification();
-            // Yield to main thread so overlay can paint (world-class: avoid frozen UI)
-            await new Promise(r => setTimeout(r, 0));
             
+            // Step 1: Clear stuck timers
             await this.clearStuckTimers();
-            await new Promise(r => setTimeout(r, 0));
+            
+            // Step 2: Reload data
             await this.reloadData();
-            await new Promise(r => setTimeout(r, 0));
+            
+            // Step 3: Reconnect integrations
             await this.reconnectIntegrations();
-            await new Promise(r => setTimeout(r, 0));
+            
+            // Step 4: Refresh UI
             await this.refreshUI();
-            await new Promise(r => setTimeout(r, 0));
+            
+            // Step 5: Restart real-time updates
             await this.restartRealTimeUpdates();
             
             console.log('✅ Recovery Complete!');

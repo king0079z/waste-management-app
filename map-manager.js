@@ -1329,23 +1329,6 @@ class MapManager {
         `;
     }
 
-    /** #12 Get current monitoring quick filter values from DOM (returns null if not on monitoring page) */
-    getMonitoringFilters() {
-        const mon = document.getElementById('monitoring');
-        if (!mon || mon.style.display === 'none') return null;
-        const fillEl = document.getElementById('monitoringFilterFill');
-        const sensorEl = document.getElementById('monitoringFilterSensor');
-        const assignedEl = document.getElementById('monitoringFilterAssigned');
-        const driverEl = document.getElementById('monitoringFilterDriver');
-        if (!fillEl || !sensorEl || !assignedEl || !driverEl) return null;
-        return {
-            fill: fillEl.value || 'all',
-            sensor: sensorEl.value || 'all',
-            assigned: assignedEl.value || 'all',
-            driverId: (driverEl.value || '').trim() || null
-        };
-    }
-
     // Load bins on map - ULTRA-AGGRESSIVE FIX to prevent popup closing
     loadBinsOnMap(force) {
         if (!this.map) {
@@ -1406,44 +1389,8 @@ class MapManager {
             });
         }
 
-        let bins = dataManager.getBins();
-        // #12 Apply monitoring quick filters (fill, sensor, assigned, driver)
-        const filters = this.getMonitoringFilters();
-        if (filters) {
-            const routes = (typeof dataManager.getRoutes === 'function' ? dataManager.getRoutes() : []) || [];
-            const assignedBinIds = new Set();
-            routes.forEach(r => {
-                const ids = r.binIds || [];
-                const binRefs = r.bins || r.binDetails || [];
-                ids.forEach(id => assignedBinIds.add(id));
-                binRefs.forEach(b => { const id = typeof b === 'object' && b != null ? (b.id || b) : b; if (id) assignedBinIds.add(id); });
-            });
-            bins = bins.filter(bin => {
-                const fill = bin.fill != null ? bin.fill : (bin.fillLevel != null ? bin.fillLevel : 0);
-                if (filters.fill !== 'all') {
-                    const minFill = parseInt(filters.fill, 10) || 0;
-                    if (fill < minFill) return false;
-                }
-                const hasSensor = !!(bin.sensorIMEI || bin.hasSensor);
-                if (filters.sensor === 'yes' && !hasSensor) return false;
-                if (filters.sensor === 'no' && hasSensor) return false;
-                const assigned = assignedBinIds.has(bin.id);
-                if (filters.assigned === 'assigned' && !assigned) return false;
-                if (filters.assigned === 'unassigned' && assigned) return false;
-                if (filters.driverId) {
-                    const routeForDriver = routes.find(r => {
-                        if (r.driverId !== filters.driverId) return false;
-                        if ((r.binIds || []).includes(bin.id)) return true;
-                        return (r.bins || r.binDetails || []).some(b => (typeof b === 'object' && b != null && b.id === bin.id) || b === bin.id);
-                    });
-                    if (!routeForDriver) return false;
-                }
-                return true;
-            });
-            console.log(`📦 After filters: ${bins.length} bins (fill=${filters.fill}, sensor=${filters.sensor}, assigned=${filters.assigned}, driver=${filters.driverId || 'all'})`);
-        } else {
-            console.log(`📦 Loading ${bins.length} bins on map from dataManager...`);
-        }
+        const bins = dataManager.getBins();
+        console.log(`📦 Loading ${bins.length} bins on map from dataManager...`);
         
         const binsWithSensors = [];
         const binsWithoutSensors = [];
@@ -3061,12 +3008,6 @@ window.updateSelectedBinsList = function() {
     const selectedList = document.getElementById('selectedBinsList');
     if (!selectedList) return;
     
-    const count = (window.selectedBinsForRoute && window.selectedBinsForRoute.length) || 0;
-    const countEl = document.getElementById('bulkSelectedCount');
-    if (countEl) countEl.textContent = count ? count + ' selected' : '';
-    const confirmBtn = document.getElementById('confirmAssignmentBtn');
-    if (confirmBtn) confirmBtn.disabled = !count || !window.selectedDriverForRoute;
-    
     if (!window.selectedBinsForRoute || window.selectedBinsForRoute.length === 0) {
         selectedList.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 1rem;">No bins selected yet</p>';
         return;
@@ -3086,65 +3027,6 @@ window.updateSelectedBinsList = function() {
             </button>
         </div>
     `).join('');
-};
-
-/** #8 Bulk actions: select all bins currently shown in the list */
-window.selectAllBinsInList = function() {
-    if (!window.selectedBinsForRoute) window.selectedBinsForRoute = [];
-    const list = document.getElementById('availableBinsList');
-    if (!list) return;
-    const cards = list.querySelectorAll('.bin-selection-card[data-bin-id]');
-    const ids = [];
-    cards.forEach(card => { const id = card.getAttribute('data-bin-id'); if (id) ids.push(id); });
-    window.selectedBinsForRoute = [...new Set([...window.selectedBinsForRoute, ...ids])];
-    cards.forEach(card => {
-        const id = card.getAttribute('data-bin-id');
-        if (id && window.selectedBinsForRoute.includes(id)) {
-            card.style.border = '2px solid #10b981';
-            card.style.background = 'rgba(16, 185, 129, 0.1)';
-            const check = card.querySelector('.fas.fa-check'); if (check) check.style.display = 'block';
-        }
-    });
-    if (typeof updateSelectedBinsList === 'function') updateSelectedBinsList();
-};
-
-/** #8 Bulk actions: deselect all */
-window.deselectAllBinsInList = function() {
-    window.selectedBinsForRoute = [];
-    const list = document.getElementById('availableBinsList');
-    if (list) {
-        list.querySelectorAll('.bin-selection-card[data-bin-id]').forEach(card => {
-            card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-            card.style.background = 'rgba(255, 255, 255, 0.05)';
-            const check = card.querySelector('.fas.fa-check'); if (check) check.style.display = 'none';
-        });
-    }
-    if (typeof updateSelectedBinsList === 'function') updateSelectedBinsList();
-};
-
-/** #8 Bulk actions: export selected bins as CSV */
-window.exportSelectedBinsCsv = function() {
-    if (!window.selectedBinsForRoute || window.selectedBinsForRoute.length === 0) {
-        if (window.app) window.app.showAlert('No selection', 'Select at least one bin to export.', 'info');
-        return;
-    }
-    const bins = (dataManager.getBins() || []).filter(b => window.selectedBinsForRoute.includes(b.id));
-    const headers = ['id', 'location', 'fill', 'status', 'lat', 'lng'];
-    const rows = [headers.join(',')].concat(bins.map(b => {
-        return headers.map(h => {
-            let v = (b[h] != null ? b[h] : '');
-            if (typeof v === 'string' && (v.indexOf(',') >= 0 || v.indexOf('"') >= 0)) v = '"' + v.replace(/"/g, '""') + '"';
-            return v;
-        }).join(',');
-    }));
-    const csv = rows.join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'bins-export-' + (new Date().toISOString().slice(0, 10)) + '.csv';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    if (window.app) window.app.showAlert('Exported', bins.length + ' bins exported as CSV.', 'success', 3000);
 };
 
 window.confirmRouteAssignment = async function() {

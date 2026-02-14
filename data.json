@@ -62,7 +62,7 @@
       "fuelEfficiency": 81,
       "fuelLevel": 72,
       "lastActive": "2026-02-13T15:00:18.173Z",
-      "lastLocationUpdate": "2026-02-13T20:56:51.466Z",
+      "lastLocationUpdate": "2026-02-13T21:14:32.458Z",
       "lastLogin": null,
       "lastSpeed": 0,
       "lastUpdate": "2026-02-11T17:38:15.087Z",
@@ -86,8 +86,8 @@
       "id": "USR-1770376041690-25",
       "createdAt": "2026-02-06T11:07:21.690Z",
       "currentLocation": {
-        "lat": 25.200232938749867,
-        "lng": 51.54770085656987
+        "lat": 25.200216504590276,
+        "lng": 51.547709104386264
       },
       "efficiency": 97,
       "email": "king0079z@hotmail.com",
@@ -95,11 +95,11 @@
       "fuelLevel": 58,
       "lastActive": "2026-02-13T20:53:37.641Z",
       "lastFuelUpdate": "2026-02-10T15:34:44.308Z",
-      "lastLocationUpdate": "2026-02-13T20:55:51.609Z",
+      "lastLocationUpdate": "2026-02-13T21:12:49.607Z",
       "lastLogin": "2026-02-13T14:55:48.744Z",
       "lastSpeed": 0,
       "lastStatusUpdate": "2026-02-13T17:23:58.592Z",
-      "lastUpdate": "2026-02-13T20:56:30.346Z",
+      "lastUpdate": "2026-02-13T21:34:25.374Z",
       "license": "",
       "movementStatus": "stationary",
       "name": "mohamed khaled",
@@ -129,7 +129,7 @@
       "fuelLevel": 85,
       "lastActive": "2026-02-13T15:00:18.172Z",
       "lastFuelUpdate": "2025-12-14T11:44:47.028Z",
-      "lastLocationUpdate": "2026-02-13T20:56:51.472Z",
+      "lastLocationUpdate": "2026-02-13T21:14:32.467Z",
       "lastLogin": "2026-02-12T03:35:50.992Z",
       "lastSpeed": 0,
       "lastStatusUpdate": "2026-02-12T03:35:54.132Z",
@@ -157,7 +157,7 @@
       "email": "mohammedaboubakr@outlook.com",
       "fuelEfficiency": 81,
       "lastActive": "2026-02-13T15:00:18.174Z",
-      "lastLocationUpdate": "2026-02-13T20:56:51.480Z",
+      "lastLocationUpdate": "2026-02-13T21:14:32.471Z",
       "lastSpeed": 0,
       "lastUpdate": "2026-02-12T04:01:56.512Z",
       "movementStatus": "stationary",
@@ -486,15 +486,15 @@
       "fillLevel": 23,
       "lastUpdated": "2026-02-11T04:57:45.215Z",
       "sensorId": "865456053885594",
-      "lastSensorUpdate": "2026-02-13T20:56:31.482Z",
+      "lastSensorUpdate": "2026-02-14T07:53:06.343Z",
       "sensorData": {
         "imei": "865456053885594",
-        "battery": 72,
+        "battery": 71,
         "temperature": 48,
         "signal": 0,
         "fillLevel": 23,
         "distanceCm": 154,
-        "lastSeen": "2026-02-13T20:56:30.838Z",
+        "lastSeen": "2026-02-14T07:53:06.149Z",
         "status": "online",
         "location": {
           "lat": 25.163,
@@ -503,7 +503,7 @@
         }
       },
       "gpsSource": "GPS",
-      "gpsUpdated": "2026-02-13T20:56:31.482Z",
+      "gpsUpdated": "2026-02-14T07:53:06.343Z",
       "collectedBy": "mohamed khaled",
       "locationName": "شارع 4, منطقة صناعية جديدة, الريان, قطر"
     }
@@ -4904,7 +4904,7 @@
       "ago": "20494 12 3",
       "ago_gps": " 2 39",
       "alarm": "0",
-      "battery": 72,
+      "battery": 71,
       "batteryLevel": "50",
       "binId": "BIN-001",
       "country": null,
@@ -4955,8 +4955,8 @@
       "inmode": null,
       "lastModTime": null,
       "lastReportType": "gps",
-      "lastSeen": "2026-02-13T20:56:30.838Z",
-      "lastUpdate": "2026-02-13T20:56:31.457Z",
+      "lastSeen": "2026-02-14T07:53:06.149Z",
+      "lastUpdate": "2026-02-14T07:53:06.317Z",
       "lat": 25.2004,
       "liveSetTime": "2026-01-24 20:52:45",
       "lng": 51.5479,
@@ -7219,10 +7219,10 @@
   "pendingRegistrations": [],
   "driverLocations": {
     "USR-1770376041690-25": {
-      "lat": 25.200232938749867,
-      "lng": 51.54770085656987,
-      "timestamp": "2026-02-13T20:56:30.307Z",
-      "accuracy": 145,
+      "lat": 25.200216504590276,
+      "lng": 51.547709104386264,
+      "timestamp": "2026-02-13T21:34:25.347Z",
+      "accuracy": 209,
       "speed": 0
     }
   },
@@ -7231,6 +7231,6 @@
     "DF703-003"
   ],
   "initialized": true,
-  "lastUpdate": "2026-02-13T20:56:59.053Z",
-  "lastSync": "2026-02-13T20:56:59.053Z"
+  "lastUpdate": "2026-02-14T07:53:12.234Z",
+  "lastSync": "2026-02-14T07:53:12.234Z"
 }

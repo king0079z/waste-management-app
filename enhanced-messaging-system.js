@@ -11,7 +11,6 @@ class EnhancedMessagingSystem {
         this.messageSound = null;
         this.isMessagingExpanded = true;
         this.driverMessagePollInterval = null; // Poll for new messages when driver (mobile WebSocket can be suspended)
-        this.adminMessagePollInterval = null; // Poll for new driver messages when manager has chat open
         
         this.init();
     }
@@ -239,9 +238,7 @@ class EnhancedMessagingSystem {
         const sendBtn = document.getElementById('sendMessageBtn');
         if (sendBtn) sendBtn.disabled = true;
 
-        // World-class: always persist to server via HTTP first so manager always receives
-        this.sendMessageGuaranteed(messageData);
-        // Also send via WebSocket for real-time delivery when available
+        // Send via WebSocket if available
         this.sendViaWebSocket(messageData);
 
         // Play send sound
@@ -265,7 +262,7 @@ class EnhancedMessagingSystem {
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData);
         
-        this.sendMessageGuaranteed(messageData);
+        // Send via WebSocket
         this.sendViaWebSocket(messageData);
         
         // Play send sound
@@ -293,7 +290,7 @@ class EnhancedMessagingSystem {
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData, true);
         
-        this.sendMessageGuaranteed(messageData);
+        // Send via WebSocket with high priority
         this.sendViaWebSocket(messageData, true);
         
         // Play emergency sound
@@ -355,8 +352,6 @@ class EnhancedMessagingSystem {
             this.ensureMessagingContainerExists();
             return;
         }
-        const msgId = String(messageData.id || messageData.timestamp || '');
-        if (msgId && Array.prototype.some.call(container.children, el => el.getAttribute('data-message-id') === msgId)) return;
 
         const welcomeMessage = container.querySelector('.welcome-message');
         if (welcomeMessage) welcomeMessage.remove();
@@ -439,32 +434,14 @@ class EnhancedMessagingSystem {
     }
 
     setCurrentDriverForAdmin(driverId) {
-        if (this.adminMessagePollInterval) {
-            clearInterval(this.adminMessagePollInterval);
-            this.adminMessagePollInterval = null;
-        }
         this.currentDriverId = driverId;
         console.log('👨‍💼 Admin messaging set for driver:', driverId);
         
-        if (driverId) {
-            this.loadAdminMessages(driverId);
-            this.updateAdminDriverInfo(driverId);
-            // World-class: poll for new driver messages while manager has this chat open so messages are never missed
-            const pollMs = 6000;
-            this.adminMessagePollInterval = setInterval(() => {
-                const modal = document.getElementById('driverDetailsModal');
-                if (!modal || modal.style.display === 'none') {
-                    if (this.adminMessagePollInterval) {
-                        clearInterval(this.adminMessagePollInterval);
-                        this.adminMessagePollInterval = null;
-                    }
-                    return;
-                }
-                if (this.currentDriverId) this.loadAdminMessages(this.currentDriverId);
-            }, pollMs);
-        } else {
-            this.updateAdminDriverInfo(null);
-        }
+        // Load messages for this driver
+        this.loadAdminMessages(driverId);
+        
+        // Update UI elements
+        this.updateAdminDriverInfo(driverId);
     }
 
     handleAdminMessageInput(event) {
@@ -504,8 +481,7 @@ class EnhancedMessagingSystem {
         const sendBtn = document.getElementById('adminSendBtn');
         if (sendBtn) sendBtn.disabled = true;
 
-        // World-class: always persist to server so driver receives on next poll or real-time
-        this.sendMessageGuaranteed(messageData);
+        // Send via WebSocket
         this.sendViaWebSocket(messageData);
 
         // Play send sound
@@ -532,7 +508,7 @@ class EnhancedMessagingSystem {
         this.addMessage(this.currentDriverId, messageData);
         this.displayAdminMessage(messageData);
         
-        this.sendMessageGuaranteed(messageData);
+        // Send via WebSocket
         this.sendViaWebSocket(messageData);
         
         // Play send sound
@@ -663,21 +639,22 @@ class EnhancedMessagingSystem {
     // ================== SHARED MESSAGING FUNCTIONS ==================
 
     addMessage(driverId, messageData) {
-        if (!driverId || !messageData) return;
         if (!this.messages[driverId]) {
             this.messages[driverId] = [];
         }
-        const id = messageData.id || messageData.timestamp || '';
-        const exists = this.messages[driverId].some(m => (m.id || m.timestamp) === id);
-        if (exists) return;
+        
         this.messages[driverId].push(messageData);
+        
+        // Update unread count for the recipient
         const recipientType = messageData.sender === 'driver' ? 'admin' : 'driver';
         if (!this.unreadCounts[driverId]) {
             this.unreadCounts[driverId] = { admin: 0, driver: 0 };
         }
         this.unreadCounts[driverId][recipientType]++;
+        
         this.saveMessagesToStorage();
         this.updateUnreadBadges();
+        // Refresh driver bottom nav message badge (same-tab: storage event does not fire)
         document.dispatchEvent(new CustomEvent('driverNavBadgesRefresh'));
     }
 
@@ -785,19 +762,6 @@ class EnhancedMessagingSystem {
 
     // ================== WEBSOCKET INTEGRATION ==================
 
-    /** World-class: always persist message to server via HTTP so it is never lost. Retries once on failure. */
-    async sendMessageGuaranteed(messageData) {
-        let ok = await this.sendViaHTTPDirect(messageData);
-        if (!ok) {
-            await new Promise(r => setTimeout(r, 800));
-            ok = await this.sendViaHTTPDirect(messageData);
-        }
-        if (!ok && window.app) {
-            window.app.showAlert('Message may not have reached the server', 'You can try sending again. The recipient may still see it when they refresh.', 'warning', 4000);
-        }
-        return ok;
-    }
-
     sendViaWebSocket(messageData, highPriority = false) {
         const wsManager = window.webSocketManager || window.wsManager;
         
@@ -815,12 +779,16 @@ class EnhancedMessagingSystem {
             };
             wsManager.send(wsMessage);
             return true;
+        } else {
+            console.warn('⚠️ No real-time connection available');
+            // Try direct HTTP send as backup
+            return this.sendViaHTTPDirect(messageData);
         }
-        return false;
     }
 
     async sendViaHTTPDirect(messageData) {
         try {
+            // Ensure admin messages include target driver so server can persist to DB
             const payload = { ...messageData };
             if (payload.sender === 'admin' && this.currentDriverId) {
                 payload.targetDriverId = this.currentDriverId;
@@ -831,12 +799,12 @@ class EnhancedMessagingSystem {
                 data: payload,
                 timestamp: new Date().toISOString()
             };
-            const baseUrl = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') : '';
-            const url = baseUrl ? `${baseUrl}/api/websocket/message` : '/api/websocket/message';
 
-            const response = await fetch(url, {
+            const response = await fetch('/api/websocket/message', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(wsMessage)
             });
 
@@ -879,6 +847,12 @@ class EnhancedMessagingSystem {
         this.addMessage(driverId, messageData);
 
         if (this.currentUser.type === 'driver' && messageData.sender === 'admin') {
+            this.displayDriverMessage(messageData);
+            setTimeout(() => {
+                const messagingSystem = document.getElementById('driverMessagingSystem');
+                if (messagingSystem && messagingSystem.style.display === 'none') messagingSystem.style.display = 'block';
+            }, 100);
+        } else if (messageData.sender === 'admin' && this.currentUser.type === 'driver') {
             this.displayDriverMessage(messageData);
             const ms = document.getElementById('driverMessagingSystem');
             if (ms && ms.style.display === 'none') ms.style.display = 'block';
