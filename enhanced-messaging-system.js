@@ -33,6 +33,8 @@ class EnhancedMessagingSystem {
         this._adminCursorOldest = null;
         this._adminHasMoreOlder = false;
         this._adminDriverIdForCursor = null;
+        this._incomingChatQueue = [];
+        this._incomingChatScheduled = false;
 
         this.init();
     }
@@ -110,7 +112,7 @@ class EnhancedMessagingSystem {
             });
         }
         
-        // When tab is hidden: stop polling. When visible: only start poll (no message load – avoids main_thread_freeze)
+        // When tab is hidden: stop polling. When visible: start poll only after 15s so driver return + admin chat open doesn't freeze
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.stopDriverMessagePoll();
@@ -118,7 +120,7 @@ class EnhancedMessagingSystem {
             }
             this.updateCurrentUser();
             if (this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id) {
-                setTimeout(() => this.startDriverMessagePoll(), 3000);
+                setTimeout(() => this.startDriverMessagePoll(), 15000);
             }
         });
     }
@@ -1213,6 +1215,49 @@ class EnhancedMessagingSystem {
         }
     }
 
+    _scheduleProcessIncomingChat() {
+        if (this._incomingChatScheduled || this._incomingChatQueue.length === 0) return;
+        this._incomingChatScheduled = true;
+        const self = this;
+        const process = () => {
+            self._incomingChatScheduled = false;
+            if (self._incomingChatQueue.length === 0) return;
+            const item = self._incomingChatQueue.shift();
+            if (!item) return;
+            const { driverId, messageData, isDriverView } = item;
+            self.addMessage(driverId, messageData);
+            if (isDriverView) {
+                if (messageData.timestamp && (!self._driverCursorNewest || new Date(messageData.timestamp) > new Date(self._driverCursorNewest))) {
+                    self._driverCursorNewest = messageData.timestamp;
+                }
+                self.displayDriverMessage(messageData);
+                const ms = document.getElementById('driverMessagingSystem');
+                if (ms && ms.style.display === 'none') ms.style.display = 'block';
+            } else {
+                const driverDetailsModal = document.getElementById('driverDetailsModal');
+                const isDriverDetailsOpen = driverDetailsModal && driverDetailsModal.style.display !== 'none';
+                if (!self.currentDriverId || self.currentDriverId === driverId || isDriverDetailsOpen) {
+                    self.displayAdminMessage(messageData);
+                    if (!self.currentDriverId) self.setCurrentDriverForAdmin(driverId);
+                }
+            }
+            self.playNotificationSound();
+            if (document.hidden && messageData.type !== 'quick_reply') self.showBrowserNotification(messageData);
+            if (self._incomingChatQueue.length > 0) {
+                if (typeof requestIdleCallback !== 'undefined') {
+                    requestIdleCallback(() => self._scheduleProcessIncomingChat(), { timeout: 100 });
+                } else {
+                    setTimeout(() => self._scheduleProcessIncomingChat(), 0);
+                }
+            }
+        };
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(process, { timeout: 200 });
+        } else {
+            setTimeout(process, 0);
+        }
+    }
+
     handleWebSocketMessage(data) {
         if (!this.currentUser) this.updateCurrentUser();
         if (data.type === 'typing_indicator') {
@@ -1240,34 +1285,9 @@ class EnhancedMessagingSystem {
             console.error('❌ No valid driverId for message:', messageData);
             return;
         }
-        this.addMessage(driverId, messageData);
-
-        // Defer all DOM updates to next tick so WebSocket handler returns immediately and main thread does not block
-        const self = this;
-        setTimeout(function applyChatMessageToDOM() {
-            if (self.currentUser.type === 'driver' && messageData.sender === 'admin') {
-                self.displayDriverMessage(messageData);
-                const messagingSystem = document.getElementById('driverMessagingSystem');
-                if (messagingSystem && messagingSystem.style.display === 'none') messagingSystem.style.display = 'block';
-            } else if (messageData.sender === 'admin' && self.currentUser.type === 'driver') {
-                self.displayDriverMessage(messageData);
-                const ms = document.getElementById('driverMessagingSystem');
-                if (ms && ms.style.display === 'none') ms.style.display = 'block';
-            } else if (messageData.sender === 'driver' && messageData.targetDriverId === self.currentUser.id) {
-                self.displayDriverMessage(messageData);
-                const ms = document.getElementById('driverMessagingSystem');
-                if (ms && ms.style.display === 'none') ms.style.display = 'block';
-            } else if (messageData.sender === 'driver' && self.currentUser.type !== 'driver') {
-                const driverDetailsModal = document.getElementById('driverDetailsModal');
-                const isDriverDetailsOpen = driverDetailsModal && driverDetailsModal.style.display !== 'none';
-                if (!self.currentDriverId || self.currentDriverId === driverId || isDriverDetailsOpen) {
-                    self.displayAdminMessage(messageData);
-                    if (!self.currentDriverId) self.setCurrentDriverForAdmin(driverId);
-                }
-            }
-            self.playNotificationSound();
-            if (document.hidden && messageData.type !== 'quick_reply') self.showBrowserNotification(messageData);
-        }, 0);
+        if (this._incomingChatQueue.length >= 50) this._incomingChatQueue.shift();
+        this._incomingChatQueue.push({ driverId, messageData, isDriverView });
+        this._scheduleProcessIncomingChat();
     }
 
     sendTypingIndicator(senderType, targetId) {
