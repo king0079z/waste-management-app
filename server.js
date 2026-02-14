@@ -1731,6 +1731,37 @@ app.get('/api/chat/audit', async (req, res) => {
     }
 });
 
+// Client health / freeze reports – so you can see in server logs why the app froze (Render dashboard, etc.)
+app.post('/api/client-health', async (req, res) => {
+    try {
+        const body = req.body || {};
+        const reason = body.reason || 'unknown';
+        const ts = new Date().toISOString();
+        const msg = `🔴 CLIENT_FREEZE/HEALTH | reason=${reason} | lastPongAt=${body.lastPongAt || '-'} | detectedAt=${body.detectedAt || ts} | visibility=${body.visibility || '-'} | userId=${body.userId || '-'} | userAgent=${(body.userAgent || '').slice(0, 60)}`;
+        console.log(msg);
+        if (body.context && typeof body.context === 'object') {
+            console.log('   context:', JSON.stringify(body.context));
+        }
+        if (typeof dbManager.addClientErrorLog === 'function') {
+            await dbManager.addClientErrorLog({
+                message: `CLIENT_FREEZE: ${reason}`,
+                stack: body.detectedAt || ts,
+                context: { lastPongAt: body.lastPongAt, visibility: body.visibility, ...body.context },
+                userId: body.userId || 'unknown',
+                userType: body.userType || 'unknown',
+                userName: body.userName || 'unknown',
+                url: body.url || '',
+                userAgent: body.userAgent || '',
+                timestamp: body.detectedAt || ts
+            });
+        }
+        res.status(200).json({ ok: true });
+    } catch (e) {
+        console.error('client-health report error:', e);
+        res.status(500).json({ ok: false });
+    }
+});
+
 // Client console errors (all users) - store and retrieve for admin
 app.post('/api/errors/client', async (req, res) => {
     try {

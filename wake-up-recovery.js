@@ -181,6 +181,8 @@ class WakeUpRecoverySystem {
         console.log(`Reason: ${reason}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
+        this.sendHealthReportToServer('wake_up_recovery_started', { reason });
+
         try {
             this.showRecoveryNotification();
 
@@ -210,13 +212,35 @@ class WakeUpRecoverySystem {
 
             console.log('✅ Recovery Complete!');
             this.showSuccessNotification();
+            this.sendHealthReportToServer('wake_up_recovery_complete', {});
         } catch (error) {
             console.error('❌ Recovery failed:', error);
             this.showErrorNotification(error);
+            this.sendHealthReportToServer('wake_up_recovery_failed', { error: error && error.message });
         } finally {
             this.isRecovering = false;
             this.lastActiveTime = Date.now();
         }
+    }
+
+    sendHealthReportToServer(reason, context) {
+        try {
+            const auth = (typeof authManager !== 'undefined' && authManager != null && typeof authManager.getCurrentUser === 'function') ? authManager : null;
+            const user = auth ? auth.getCurrentUser() : null;
+            const payload = {
+                reason,
+                detectedAt: new Date().toISOString(),
+                visibility: typeof document !== 'undefined' && document.hidden ? 'hidden' : 'visible',
+                userId: user ? (user.id || '') : '',
+                userType: user ? (user.type || '') : '',
+                userName: user ? (user.name || '') : '',
+                url: typeof location !== 'undefined' ? location.href : '',
+                userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+                context
+            };
+            const url = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') + '/api/client-health' : '/api/client-health';
+            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true }).catch(function () {});
+        } catch (e) {}
     }
     
     async clearStuckTimers() {
