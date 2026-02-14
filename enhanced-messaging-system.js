@@ -118,6 +118,7 @@ class EnhancedMessagingSystem {
                 this.stopDriverMessagePoll();
                 return;
             }
+            if (this.currentUser?.type === 'driver') window.__driverJustBecameVisibleAt = Date.now();
             this.updateCurrentUser();
             if (this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id) {
                 setTimeout(() => this.startDriverMessagePoll(), 15000);
@@ -371,14 +372,14 @@ class EnhancedMessagingSystem {
 
         // Send via WebSocket with high priority
         this.sendViaWebSocket(messageData, true);
-        
-        // Play emergency sound
-        this.playEmergencySound();
 
-        // Show confirmation
-        if (window.app) {
-            window.app.showAlert('Emergency Alert Sent', 'Your emergency alert has been sent to management. Help is on the way.', 'error', 5000);
-        }
+        const self = this;
+        setTimeout(function() {
+            self.playEmergencySound();
+            if (window.app) {
+                window.app.showAlert('Emergency Alert Sent', 'Your emergency alert has been sent to management. Help is on the way.', 'error', 5000);
+            }
+        }, 0);
 
         console.log('🚨 Emergency message sent');
     }
@@ -1241,8 +1242,10 @@ class EnhancedMessagingSystem {
                     if (!self.currentDriverId) self.setCurrentDriverForAdmin(driverId);
                 }
             }
-            self.playNotificationSound();
-            if (document.hidden && messageData.type !== 'quick_reply') self.showBrowserNotification(messageData);
+            setTimeout(function() {
+                self.playNotificationSound();
+                if (document.hidden && messageData.type !== 'quick_reply') self.showBrowserNotification(messageData);
+            }, 0);
             if (self._incomingChatQueue.length > 0) {
                 if (typeof requestIdleCallback !== 'undefined') {
                     requestIdleCallback(() => self._scheduleProcessIncomingChat(), { timeout: 100 });
@@ -1414,6 +1417,8 @@ class EnhancedMessagingSystem {
             const updatedMessages = JSON.parse(newValue || '{}');
             this.messages = updatedMessages;
             if (this.currentUser?.type === 'driver') {
+                if (typeof document !== 'undefined' && document.hidden) return;
+                if (window.__driverJustBecameVisibleAt && (Date.now() - window.__driverJustBecameVisibleAt) < 20000) return;
                 this.loadDriverMessagesDebounced(this.currentUser.id);
             } else if (this.currentDriverId) {
                 this.loadAdminMessagesDebounced(this.currentDriverId);
