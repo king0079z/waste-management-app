@@ -11,12 +11,16 @@ class EnhancedDriverSystemComplete {
         this.buttons = {};
         this.initialized = false;
         
-        // GPS and proximity tracking
+        // GPS and proximity tracking (world-class: use shared config when available)
         this.currentPosition = null;
         this.proximityCheckInterval = null;
         this.nearbyBins = new Map(); // Track bins driver is near
-        this.proximityThreshold = 15; // meters - "extremely near" (auto-collection)
-        this.maxDistanceForManualCollectionMeters = 100; // max distance to allow manual "Register collection"
+        const acCfg = typeof window !== 'undefined' && window.autoCollectionConfig ? window.autoCollectionConfig : {};
+        this.proximityThreshold = acCfg.proximityMeters != null ? acCfg.proximityMeters : 15; // meters
+        this.minDwellNearBinMs = acCfg.minDwellNearBinMs != null ? acCfg.minDwellNearBinMs : 12000; // 12s
+        this.fillWasAbovePercent = acCfg.fillWasAbovePercent != null ? acCfg.fillWasAbovePercent : 20;
+        this.minFillDropPercent = acCfg.minFillDropPercent != null ? acCfg.minFillDropPercent : 0;
+        this.maxDistanceForManualCollectionMeters = 100;
         this.autoCollectionEnabled = true;
         
         // Button states
@@ -779,14 +783,14 @@ class EnhancedDriverSystemComplete {
     // =============================================================================
     
     startProximityMonitoring() {
-        console.log('🎯 Starting proximity monitoring for auto-collection...');
+        const intervalMs = (window.autoCollectionConfig && window.autoCollectionConfig.proximityCheckIntervalMs) || 3000;
+        console.log('🎯 Starting proximity monitoring for auto-collection (interval ' + intervalMs + 'ms)...');
         
-        // Check proximity every 3 seconds
         this.proximityCheckInterval = setInterval(() => {
             if (this.autoCollectionEnabled && this.currentUser) {
                 this.checkProximityToAnyBins();
             }
-        }, 3000);
+        }, intervalMs);
     }
     
     stopProximityMonitoring() {
@@ -806,19 +810,17 @@ class EnhancedDriverSystemComplete {
         for (const bin of bins) {
             const distance = this.calculateDistance(driverLat, driverLng, bin.lat, bin.lng);
             
-            // Check if extremely near (within threshold)
-            if (distance <= this.proximityThreshold) {
-                // Track this bin
+            const thresholdM = this.proximityThreshold;
+            if (distance <= thresholdM) {
                 if (!this.nearbyBins.has(bin.id)) {
                     this.nearbyBins.set(bin.id, {
                         bin,
                         enteredProximityAt: Date.now(),
-                        previousFill: bin.fill
+                        previousFill: bin.fill != null ? bin.fill : 0
                     });
                     console.log(`📍 Driver entered proximity of bin ${bin.id} (${distance.toFixed(1)}m away)`);
                 }
                 
-                // Check for automatic collection trigger
                 await this.checkAutoCollectionTrigger(bin);
             } else {
                 // Driver left proximity
@@ -834,56 +836,51 @@ class EnhancedDriverSystemComplete {
         const proximityData = this.nearbyBins.get(bin.id);
         if (!proximityData) return;
         
-        // Check if bin content became zero (was filled, now empty)
-        if (proximityData.previousFill > 0 && bin.fill === 0) {
-            console.log(`🎯 AUTO-COLLECTION TRIGGER: Bin ${bin.id} emptied while driver nearby!`);
+        const now = Date.now();
+        const dwellMs = now - proximityData.enteredProximityAt;
+        if (dwellMs < this.minDwellNearBinMs) {
+            proximityData.previousFill = bin.fill != null ? bin.fill : proximityData.previousFill;
+            return;
+        }
+        
+        const prevFill = proximityData.previousFill != null ? proximityData.previousFill : 0;
+        const curFill = bin.fill != null ? bin.fill : 0;
+        const significantDrop = prevFill >= this.fillWasAbovePercent && curFill <= this.minFillDropPercent;
+        
+        if (significantDrop) {
+            if (window.autoCollectionCooldown && typeof window.autoCollectionCooldown.isBinInCooldown === 'function' && window.autoCollectionCooldown.isBinInCooldown(bin.id)) {
+                proximityData.previousFill = curFill;
+                return;
+            }
+            console.log(`🎯 AUTO-COLLECTION TRIGGER: Bin ${bin.id} emptied while driver nearby (dwell ${(dwellMs/1000).toFixed(0)}s)!`);
             await this.performAutoCollection(bin, proximityData);
         }
         
-        // Update previous fill level
-        proximityData.previousFill = bin.fill;
+        proximityData.previousFill = curFill;
     }
     
     async performAutoCollection(bin, proximityData) {
-        console.log(`🤖 Performing automatic collection for bin ${bin.id}`);
+        console.log(`🤖 Performing automatic collection for bin ${bin.id} (world-class: via markBinCollected)`);
         
         try {
-            // Create collection record
-            const collection = {
-                binId: bin.id,
-                driverId: this.currentUser.id,
-                driverName: this.currentUser.name,
-                binLocation: bin.location,
-                originalFill: proximityData.previousFill,
-                weight: Math.round(proximityData.previousFill * 0.6),
-                timestamp: new Date().toISOString(),
-                collectionType: 'auto-proximity',
-                distance: this.calculateDistance(
-                    this.currentPosition.lat,
-                    this.currentPosition.lng,
-                    bin.lat,
-                    bin.lng
-                ),
-                accuracy: this.currentPosition.accuracy
-            };
+            if (window.autoCollectionCooldown && typeof window.autoCollectionCooldown.setCooldown === 'function') {
+                window.autoCollectionCooldown.setCooldown(bin.id);
+            }
             
-            // Save collection
-            window.dataManager.addCollection(collection);
+            if (typeof window.markBinCollected !== 'function') {
+                console.error('❌ markBinCollected not available');
+                return;
+            }
             
-            // Update bin
-            window.dataManager.updateBin(bin.id, {
-                fill: 0,
-                lastCollection: new Date().toLocaleString(),
-                collectedBy: this.currentUser.name,
-                collectedById: this.currentUser.id,
-                status: 'normal',
-                autoCollected: true
-            });
+            await window.markBinCollected(bin.id, { isAutoCollection: true });
             
-            // Check if bin was assigned to someone else
+            const distanceM = this.currentPosition && bin.lat != null && bin.lng != null
+                ? this.calculateDistance(this.currentPosition.lat, this.currentPosition.lng, bin.lat, bin.lng)
+                : 0;
+            
             const routes = window.dataManager.getRoutes();
             const assignedRoute = routes.find(route => 
-                route.binIds?.includes(bin.id) && 
+                (route.binIds && route.binIds.includes(bin.id)) && 
                 route.driverId !== this.currentUser.id &&
                 route.status !== 'completed'
             );
@@ -891,31 +888,24 @@ class EnhancedDriverSystemComplete {
             if (assignedRoute) {
                 console.log(`📢 Bin was assigned to driver ${assignedRoute.driverId}, notifying...`);
                 await this.notifyDriverBinCollected(assignedRoute.driverId, bin);
-                
-                // Mark route bin as collected
                 this.markRouteBinAsCollected(assignedRoute.id, bin.id);
             }
             
-            // Broadcast update to all clients
-            this.broadcastCollectionUpdate(bin.id, collection);
+            if (typeof this.updateAISuggestions === 'function') this.updateAISuggestions(bin.id);
             
-            // Update AI suggestions
-            this.updateAISuggestions(bin.id);
+            if (window.dataManager && typeof window.dataManager.addSystemLog === 'function') {
+                window.dataManager.addSystemLog(`Auto-collection (proximity): bin ${bin.id} by ${this.currentUser.name}`, 'success');
+            }
             
-            // Show notification to driver
             this.showNotification(
                 'Auto-Collection Registered',
-                `🎯 Bin ${bin.id} automatically registered! Proximity: ${collection.distance.toFixed(1)}m`,
+                `🎯 Bin ${bin.id} automatically registered! (${distanceM.toFixed(0)}m)`,
                 'success',
                 5000
             );
             
-            // Update stats
             this.updateQuickStats();
-            
-            // Remove from nearby tracking
             this.nearbyBins.delete(bin.id);
-            
             console.log('✅ Automatic collection completed successfully');
             
         } catch (error) {

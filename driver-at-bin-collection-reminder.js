@@ -1,22 +1,23 @@
 /**
- * Driver-at-Bin Auto-Collection
+ * Driver-at-Bin Auto-Collection (World-class)
  * When GPS shows the driver was at a bin but they didn't tap "Mark as collected",
  * the system automatically registers the collection for this driver (assigned or ad-hoc).
- * - Only runs when a driver is logged in and location is available.
- * - Requires driver to have been near the bin for a short dwell (consecutive position checks).
- * - Cooldown per bin so we don't record the same bin twice.
+ * - Uses shared config (auto-collection-config.js) and cooldown so no double-record with proximity system.
+ * - Configurable: nearBinMeters, positionHistorySize, checkIntervalDriverAtBinMs, cooldownMs.
  */
 (function() {
     'use strict';
 
-    const NEAR_BIN_KM = 0.05;
-    const POSITION_HISTORY_SIZE = 3;
-    const CHECK_INTERVAL_MS = 20000;
-    const AUTO_RECORD_COOLDOWN_MS = 2 * 60 * 60 * 1000;
-    const STORAGE_KEY = 'driverAtBin_';
+    function getCfg() {
+        var c = window.autoCollectionConfig || {};
+        return {
+            nearBinKm: (c.nearBinMeters != null ? c.nearBinMeters : 30) / 1000,
+            positionHistorySize: c.positionHistorySize != null ? c.positionHistorySize : 3,
+            checkIntervalMs: c.checkIntervalDriverAtBinMs != null ? c.checkIntervalDriverAtBinMs : 15000
+        };
+    }
 
     let positionHistory = [];
-    let lastAutoRecordedForBin = {};
     let checkTimer = null;
 
     function getCurrentUser() {
@@ -56,15 +57,16 @@
     }
 
     function wasAutoRecordedRecently(binId) {
-        var key = STORAGE_KEY + binId;
-        var val = lastAutoRecordedForBin[key] || parseInt(localStorage.getItem(key) || '0', 10);
-        if (val && (Date.now() - val < AUTO_RECORD_COOLDOWN_MS)) return true;
+        if (window.autoCollectionCooldown && typeof window.autoCollectionCooldown.isBinInCooldown === 'function') {
+            return window.autoCollectionCooldown.isBinInCooldown(binId);
+        }
         return false;
     }
 
     function setAutoRecorded(binId) {
-        lastAutoRecordedForBin[STORAGE_KEY + binId] = Date.now();
-        try { localStorage.setItem(STORAGE_KEY + binId, String(Date.now())); } catch (e) {}
+        if (window.autoCollectionCooldown && typeof window.autoCollectionCooldown.setCooldown === 'function') {
+            window.autoCollectionCooldown.setCooldown(binId);
+        }
     }
 
     function autoRecordCollection(bin, driverId) {
@@ -88,10 +90,11 @@
         var loc = getDriverLocation(user.id);
         if (!loc || loc.lat == null || loc.lng == null) return;
 
+        var cfg = getCfg();
         positionHistory.push({ lat: loc.lat, lng: loc.lng, ts: Date.now() });
-        if (positionHistory.length > POSITION_HISTORY_SIZE) positionHistory.shift();
+        if (positionHistory.length > cfg.positionHistorySize) positionHistory.shift();
 
-        if (positionHistory.length < POSITION_HISTORY_SIZE) return;
+        if (positionHistory.length < cfg.positionHistorySize) return;
 
         var bins = getBins();
         for (var i = 0; i < bins.length; i++) {
@@ -103,7 +106,7 @@
             var allNear = true;
             for (var j = 0; j < positionHistory.length; j++) {
                 var d = calculateDistance(positionHistory[j].lat, positionHistory[j].lng, bin.lat, bin.lng);
-                if (d > NEAR_BIN_KM) { allNear = false; break; }
+                if (d > cfg.nearBinKm) { allNear = false; break; }
             }
             if (allNear) {
                 autoRecordCollection(bin, user.id);
@@ -115,7 +118,8 @@
 
     function startReminder() {
         if (checkTimer) return;
-        checkTimer = setInterval(checkDriverAtBin, CHECK_INTERVAL_MS);
+        var cfg = getCfg();
+        checkTimer = setInterval(checkDriverAtBin, cfg.checkIntervalMs);
         checkDriverAtBin();
     }
 

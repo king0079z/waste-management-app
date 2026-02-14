@@ -1190,7 +1190,7 @@ body {
 }
 .ops-strip-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 1rem;
 }
 @media (max-width: 1024px) {
@@ -1235,6 +1235,7 @@ body {
 .ops-strip-warning .ops-strip-value { color: #fbbf24; }
 .ops-strip-drivers .ops-strip-value { color: #34d399; }
 .ops-strip-alerts .ops-strip-value { color: #f59e0b; }
+.ops-strip-auto .ops-strip-value { color: #06b6d4; }
 
 /* Two-column layout */
 .dashboard-two-col {

@@ -2583,6 +2583,7 @@ class WasteManagementApp {
         setEl('dashboardActiveDrivers', stats.activeDrivers || 0);
         setEl('dashboardPendingRoutes', pendingRoutes.length);
         setEl('dashboardActiveAlerts', alerts.length);
+        setEl('dashboardAutoCollectionsToday', stats.autoCollectionsToday != null ? stats.autoCollectionsToday : 0);
 
         // Activity feed
         const feedEl = document.getElementById('dashboardActivityFeed');

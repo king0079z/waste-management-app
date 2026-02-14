@@ -1443,6 +1443,7 @@ class DataManager {
         const pendingRegistrations = this.getPendingRegistrations();
         const todayCollections = this.getTodayCollections();
         const activeComplaints = this.getActiveComplaints();
+        const autoCollectionsToday = todayCollections.filter(c => c.autoCollection === true).length;
         
         return {
             totalUsers: users.length,
@@ -1451,7 +1452,8 @@ class DataManager {
             activeAlerts: activeAlerts.length,
             pendingRegistrations: pendingRegistrations.length,
             todayCollections: todayCollections.length,
-            activeComplaints: activeComplaints.length
+            activeComplaints: activeComplaints.length,
+            autoCollectionsToday
         };
     }
 
