@@ -14,6 +14,7 @@ class WakeUpRecoverySystem {
         this.mobileBackgroundThreshold = 1000; // 1s hidden = run driver reconnection (phone lock) – world-class: react quickly
         this.driverReconnectDebounce = 0;      // Avoid double-run when visibility + focus fire together
         this.driverReconnectOverlay = null;    // Lightweight "Reconnecting..." overlay so app never feels frozen
+        this._reconnectOverlaySafetyTimer = null; // Always hide overlay after this time (avoid infinite "Reconnecting...")
         
         this.init();
     }
@@ -144,7 +145,7 @@ class WakeUpRecoverySystem {
                     };
                     if (p && typeof p.then === 'function') {
                         p.then(onDone).catch(onDone);
-                        setTimeout(done, 8000);
+                        setTimeout(done, 3500);
                     } else {
                         onDone();
                     }
@@ -172,7 +173,7 @@ class WakeUpRecoverySystem {
                 console.warn('Reconnection step failed:', e && e.message);
                 done();
             }
-        }, 50);
+        }, 400);
     }
     
     showDriverReconnectingOverlay() {
@@ -192,13 +193,23 @@ class WakeUpRecoverySystem {
             window.location.href = window.location.href;
         });
         this.driverReconnectOverlay = el;
+        var self = this;
+        if (this._reconnectOverlaySafetyTimer) clearTimeout(this._reconnectOverlaySafetyTimer);
+        this._reconnectOverlaySafetyTimer = setTimeout(function() {
+            self._reconnectOverlaySafetyTimer = null;
+            self.hideDriverReconnectingOverlay();
+        }, 5000);
     }
     
     hideDriverReconnectingOverlay() {
+        if (this._reconnectOverlaySafetyTimer) {
+            clearTimeout(this._reconnectOverlaySafetyTimer);
+            this._reconnectOverlaySafetyTimer = null;
+        }
         if (this.driverReconnectOverlay && this.driverReconnectOverlay.parentNode) {
             this.driverReconnectOverlay.remove();
-            this.driverReconnectOverlay = null;
         }
+        this.driverReconnectOverlay = null;
     }
     
     async performRecovery(reason = 'unknown') {
