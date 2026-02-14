@@ -2,8 +2,10 @@
 // Lets the server (e.g. Render logs) see the main reason behind client freezes.
 
 const PING_INTERVAL_MS = 5000;
-const FREEZE_THRESHOLD_MS = 15000;
+const FREEZE_THRESHOLD_MS = 25000;
+const REPORT_COOLDOWN_MS = 60000;
 let lastPongAt = 0;
+let lastReportAt = 0;
 let pingTimer = null;
 let lastPayload = {};
 
@@ -43,7 +45,8 @@ function sendFreezeReport(reason) {
 function checkFreeze() {
     const now = Date.now();
     if (lastPongAt > 0 && (now - lastPongAt) >= FREEZE_THRESHOLD_MS) {
-        if (lastPayload.visibility !== 'hidden') {
+        if (lastPayload.visibility !== 'hidden' && (now - lastReportAt) >= REPORT_COOLDOWN_MS) {
+            lastReportAt = now;
             sendFreezeReport('main_thread_freeze');
         }
         lastPongAt = now;

@@ -10,9 +10,20 @@ class DatabaseManager {
         this.initialized = false;
         this.initializing = false; // Lock to prevent double initialization
         this.initPromise = null; // Store the init promise for waiting
-        this.dbType = process.env.DATABASE_TYPE || process.env.DB_TYPE || 'json'; // 'json', 'mongodb', 'postgresql'
-        this.connectionString = process.env.DATABASE_URL || process.env.MONGODB_URI || process.env.MONGODB_URL || 'mongodb://localhost:27017';
-        this.databaseName = process.env.MONGODB_DATABASE || process.env.DB_NAME || 'waste_management';
+        const rawUri = process.env.DATABASE_URL || process.env.MONGODB_URI || process.env.MONGODB_URL || '';
+        this.connectionString = (typeof rawUri === 'string' ? rawUri : String(rawUri || ''))
+            .replace(/\uFEFF/g, '')
+            .trim()
+            .replace(/^["']|["']$/g, '')
+            .replace(/[\r\n]+/g, '')
+            .trim() || 'mongodb://localhost:27017';
+        if (this.connectionString && (this.connectionString.startsWith('mongodb://') || this.connectionString.startsWith('mongodb+srv://'))) {
+            this.dbType = process.env.DATABASE_TYPE || process.env.DB_TYPE || 'mongodb';
+        } else {
+            this.dbType = process.env.DATABASE_TYPE || process.env.DB_TYPE || 'json';
+        }
+        const rawDb = process.env.MONGODB_DATABASE || process.env.DB_NAME || 'waste_management';
+        this.databaseName = (typeof rawDb === 'string' ? rawDb : String(rawDb || '')).trim().replace(/^["']|["']$/g, '') || 'waste_management';
         this.mongoClient = null;
         this.mongoDb = null;
         this.fallbackStorage = new Map(); // In-memory fallback
@@ -101,11 +112,15 @@ class DatabaseManager {
 
     async initMongoDB() {
         try {
+            const uri = this.connectionString.trim();
+            if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+                throw new Error('Invalid scheme, expected connection string to start with "mongodb://" or "mongodb+srv://". Got: ' + (uri ? uri.substring(0, 30) + '...' : 'empty'));
+            }
             console.log('🍃 Initializing MongoDB connection...');
-            console.log(`   Connection: ${this.connectionString.replace(/\/\/.*@/, '//***@')}`);
+            console.log(`   Connection: ${uri.replace(/\/\/.*@/, '//***@')}`);
             console.log(`   Database: ${this.databaseName}`);
             
-            this.mongoClient = new MongoClient(this.connectionString, {
+            this.mongoClient = new MongoClient(uri, {
                 serverSelectionTimeoutMS: 5000,
                 connectTimeoutMS: 10000,
                 maxPoolSize: 10,
@@ -1071,6 +1086,34 @@ class DatabaseManager {
         }
         const all = this.data?.driverMessages || {};
         return Array.isArray(all[driverId]) ? all[driverId] : [];
+    }
+
+    /**
+     * WhatsApp-style: paginated and delta fetches. Returns { messages, hasMore, nextBefore }.
+     * - limit: max messages (default 50)
+     * - before: ISO timestamp – return messages older than this (for "load older")
+     * - since: ISO timestamp – return only messages newer than this (delta sync, no full reload)
+     */
+    async getDriverMessagesPaginated(driverId, opts = {}) {
+        const limit = Math.min(Math.max(1, parseInt(opts.limit, 10) || 50), 100);
+        const before = opts.before ? new Date(opts.before).getTime() : null;
+        const since = opts.since ? new Date(opts.since).getTime() : null;
+        const all = await this.getDriverMessages(driverId);
+        const sorted = all.slice().sort((a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime());
+        let list;
+        if (since != null && !isNaN(since)) {
+            list = sorted.filter(m => new Date(m.timestamp || 0).getTime() > since);
+            return { messages: list.slice(-limit), hasMore: false, nextBefore: null };
+        }
+        if (before != null && !isNaN(before)) {
+            list = sorted.filter(m => new Date(m.timestamp || 0).getTime() < before);
+            const page = list.slice(-limit);
+            const nextTs = page.length ? page[0].timestamp : null;
+            return { messages: page.reverse(), hasMore: list.length > limit, nextBefore: nextTs };
+        }
+        list = sorted.slice(-limit);
+        const nextTs = sorted.length > limit ? sorted[sorted.length - limit - 1]?.timestamp : null;
+        return { messages: list, hasMore: sorted.length > limit, nextBefore: nextTs };
     }
 
     async addDriverMessage(driverId, message) {
