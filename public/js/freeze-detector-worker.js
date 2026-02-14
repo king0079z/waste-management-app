@@ -43,7 +43,9 @@ function sendFreezeReport(reason) {
 function checkFreeze() {
     const now = Date.now();
     if (lastPongAt > 0 && (now - lastPongAt) >= FREEZE_THRESHOLD_MS) {
-        sendFreezeReport('main_thread_freeze');
+        if (lastPayload.visibility !== 'hidden') {
+            sendFreezeReport('main_thread_freeze');
+        }
         lastPongAt = now;
     }
     pingTimer = self.setTimeout(schedulePing, PING_INTERVAL_MS);
@@ -65,6 +67,8 @@ self.onmessage = function (e) {
         if (d.url !== undefined) lastPayload.url = d.url;
         if (d.userAgent !== undefined) lastPayload.userAgent = d.userAgent;
         if (d.context) lastPayload.context = d.context;
+    } else if (d && d.type === 'visibility' && d.visibility !== undefined) {
+        lastPayload.visibility = d.visibility;
     }
 };
 

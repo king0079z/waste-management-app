@@ -7,6 +7,14 @@
     } catch (e) {
         return;
     }
+    function sendVisibility() {
+        if (worker && typeof document !== 'undefined') {
+            worker.postMessage({ type: 'visibility', visibility: document.hidden ? 'hidden' : 'visible' });
+        }
+    }
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', sendVisibility);
+    }
     worker.onmessage = function (e) {
         var d = e && e.data;
         if (d && d.type === 'ping') {
