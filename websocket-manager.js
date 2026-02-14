@@ -868,7 +868,9 @@ class WebSocketManager {
         console.log('📦 Real-time bin added notification received:', data.binId);
         console.log(`📦 Server now has ${data.totalBins} bins`);
         
-        // Immediately sync from server to get the new bin
+        // Sync from server to get the new bin (skip for driver to avoid main_thread_freeze)
+        const user = this.getCurrentUser();
+        if (user && user.type === 'driver') return;
         if (typeof syncManager !== 'undefined' && syncManager.syncFromServer) {
             console.log('🔄 Syncing from server to get new bin...');
             syncManager.syncFromServer().then(() => {

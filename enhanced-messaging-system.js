@@ -176,8 +176,14 @@ class EnhancedMessagingSystem {
         
         this.stopDriverMessagePoll();
         
-        // Load messages for driver (debounced so visibilitychange + init don't double-run)
-        this.loadDriverMessagesDebounced(this.currentUser.id);
+        // Defer first message load so main thread stays responsive (avoids main_thread_freeze)
+        const driverId = this.currentUser.id;
+        const loadWhenIdle = () => this.loadDriverMessagesDebounced(driverId);
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(loadWhenIdle, { timeout: 6000 });
+        } else {
+            setTimeout(loadWhenIdle, 2000);
+        }
         
         // Poll only when tab is visible; when hidden we stop the poll so returning to tab doesn't fire many queued callbacks
         this.startDriverMessagePoll();

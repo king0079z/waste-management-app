@@ -42,9 +42,13 @@ class SyncManager {
                 console.log('✅ Server sync enabled');
                 this.startPeriodicSync();
                 this.setupEventListeners();
-                
-                // Initial sync from server
-                this.syncFromServer();
+                // Defer initial sync so main thread stays responsive (avoids main_thread_freeze on driver)
+                const doInitialSync = () => { this.syncFromServer(); };
+                if (typeof requestIdleCallback !== 'undefined') {
+                    requestIdleCallback(doInitialSync, { timeout: 8000 });
+                } else {
+                    setTimeout(doInitialSync, 500);
+                }
             } else {
                 console.log('⚠️ Server not available, using local storage only');
                 this.syncEnabled = false;
