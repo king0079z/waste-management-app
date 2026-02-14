@@ -22,6 +22,17 @@ class EnhancedMessagingSystem {
         this._saveMessagesToStorageTimer = null;
         this._saveMessagesPending = false;
         this.MAX_STORED_MESSAGES_PER_DRIVER = 300;
+        // WhatsApp-style: no full re-render; delta sync and load older only
+        this._driverCursorNewest = null;
+        this._driverCursorOldest = null;
+        this._driverHasMoreOlder = false;
+        this._driverInitialLoadDone = false;
+        this._driverIdForCursor = null;
+        this._adminCursorNewest = null;
+        this._adminInitialLoadDone = false;
+        this._adminCursorOldest = null;
+        this._adminHasMoreOlder = false;
+        this._adminDriverIdForCursor = null;
 
         this.init();
     }
@@ -282,7 +293,10 @@ class EnhancedMessagingSystem {
 
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData);
-        
+        if (messageData.timestamp && (!this._driverCursorNewest || new Date(messageData.timestamp) > new Date(this._driverCursorNewest))) {
+            this._driverCursorNewest = messageData.timestamp;
+        }
+
         // Clear input
         input.value = '';
         const sendBtn = document.getElementById('sendMessageBtn');
@@ -317,6 +331,9 @@ class EnhancedMessagingSystem {
 
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData);
+        if (messageData.timestamp && (!this._driverCursorNewest || new Date(messageData.timestamp) > new Date(this._driverCursorNewest))) {
+            this._driverCursorNewest = messageData.timestamp;
+        }
 
         this.sendViaWebSocket(messageData);
         this.playMessageSound();
@@ -342,7 +359,10 @@ class EnhancedMessagingSystem {
 
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData, true);
-        
+        if (messageData.timestamp && (!this._driverCursorNewest || new Date(messageData.timestamp) > new Date(this._driverCursorNewest))) {
+            this._driverCursorNewest = messageData.timestamp;
+        }
+
         // Send via WebSocket with high priority
         this.sendViaWebSocket(messageData, true);
         
@@ -388,14 +408,65 @@ class EnhancedMessagingSystem {
         const container = document.getElementById('messagesContainer');
         if (!container) return;
 
-        // World-class: always fetch full history from server so driver sees messages sent while offline
+        if (this._driverIdForCursor !== driverId) {
+            this._driverCursorNewest = null;
+            this._driverCursorOldest = null;
+            this._driverHasMoreOlder = false;
+            this._driverInitialLoadDone = false;
+            this._driverIdForCursor = driverId;
+        }
+
         const baseUrl = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') : '';
-        const fetchTimeoutMs = 12000;
-        let res;
+        const fetchTimeoutMs = 8000;
+
+        // WhatsApp-style: delta sync only (append new messages, no full re-render)
+        if (this._driverInitialLoadDone && this._driverCursorNewest) {
+            try {
+                const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), fetchTimeoutMs) : null;
+                const url = `${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages?limit=100&since=${encodeURIComponent(this._driverCursorNewest)}`;
+                const res = await fetch(url, { signal: ctrl ? ctrl.signal : undefined });
+                if (timeoutId) clearTimeout(timeoutId);
+                if (!res.ok) return;
+                const data = await res.json();
+                const newMessages = Array.isArray(data.messages) ? data.messages : [];
+                if (newMessages.length === 0) {
+                    this.markMessagesAsRead(driverId, 'driver');
+                    return;
+                }
+                const existing = this.messages[driverId] || [];
+                const byId = new Map();
+                existing.forEach(m => byId.set(m.id || m.timestamp, m));
+                newMessages.forEach(m => byId.set(m.id || m.timestamp, m));
+                const merged = Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+                const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+                this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
+                this.saveMessagesToStorageDebounced();
+                const lastTs = merged[merged.length - 1] && merged[merged.length - 1].timestamp;
+                if (lastTs) this._driverCursorNewest = lastTs;
+                // Append only new messages to DOM (no innerHTML, no re-render of all) – WhatsApp-style
+                const self = this;
+                let appended = 0;
+                newMessages.forEach(function(msg) {
+                    if (!container.querySelector('[data-message-id="' + (msg.id || msg.timestamp) + '"]')) {
+                        self.displayDriverMessage(msg, false);
+                        appended++;
+                    }
+                });
+                if (appended) this.scrollToBottom(container);
+            } catch (e) {
+                console.warn('Delta fetch driver messages failed:', e.message);
+            }
+            this.markMessagesAsRead(driverId, 'driver');
+            return;
+        }
+
+        // Initial load: fetch last 50 only, single replace of container (WhatsApp-style)
+        let messages = [];
         try {
             const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
             const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), fetchTimeoutMs) : null;
-            res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages`, { signal: ctrl ? ctrl.signal : undefined });
+            const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages?limit=50`, { signal: ctrl ? ctrl.signal : undefined });
             if (timeoutId) clearTimeout(timeoutId);
             if (res.ok) {
                 const data = await res.json();
@@ -410,37 +481,112 @@ class EnhancedMessagingSystem {
                 const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
                 this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
                 this.saveMessagesToStorageDebounced();
+                // WhatsApp-style: only render latest 50 on initial load to prevent freeze (load older for rest)
+                const full = this.messages[driverId] || [];
+                messages = full.length > 50 ? full.slice(-50) : full;
+                this._driverHasMoreOlder = full.length > 50 || !!data.hasMore;
+                this._driverInitialLoadDone = true;
+                if (messages.length) {
+                    this._driverCursorNewest = messages[messages.length - 1].timestamp;
+                    this._driverCursorOldest = messages[0].timestamp;
+                } else {
+                    this._driverCursorNewest = null;
+                    this._driverCursorOldest = null;
+                }
             }
         } catch (e) {
             console.warn('Could not load driver message history from server:', e.message);
+            const full = this.messages[driverId] || [];
+            messages = full.length > 50 ? full.slice(-50) : full;
+            this._driverInitialLoadDone = true;
+            if (messages.length) {
+                this._driverCursorNewest = messages[messages.length - 1].timestamp;
+                this._driverCursorOldest = messages[0].timestamp;
+                this._driverHasMoreOlder = full.length > 50;
+            } else {
+                this._driverCursorNewest = null;
+                this._driverCursorOldest = null;
+            }
         }
 
-        const messages = this.messages[driverId] || [];
         const welcomeMessage = container.querySelector('.welcome-message');
-        // Yield before heavy DOM work so wake-up / open doesn't freeze the page
         await new Promise(function(r) { (typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(r) : setTimeout(r, 0)); });
         container.innerHTML = '';
+        this._ensureLoadOlderButton(container);
 
         if (messages.length === 0) {
             if (welcomeMessage) container.appendChild(welcomeMessage);
         } else {
-            const BATCH = 25;
-            if (messages.length <= BATCH) {
-                messages.forEach(message => this.displayDriverMessage(message, false));
-                this.scrollToBottom(container);
-            } else {
-                let idx = 0;
-                const renderBatch = () => {
-                    const end = Math.min(idx + BATCH, messages.length);
-                    for (; idx < end; idx++) this.displayDriverMessage(messages[idx], false);
-                    if (idx < messages.length) requestAnimationFrame(renderBatch);
-                    else this.scrollToBottom(container);
-                };
-                requestAnimationFrame(renderBatch);
-            }
+            const BATCH = 20;
+            const renderNext = (idx) => {
+                const end = Math.min(idx + BATCH, messages.length);
+                for (let i = idx; i < end; i++) this.displayDriverMessage(messages[i], false);
+                if (end < messages.length) requestAnimationFrame(() => renderNext(end));
+                else this.scrollToBottom(container);
+            };
+            renderNext(0);
         }
 
         this.markMessagesAsRead(driverId, 'driver');
+    }
+
+    _ensureLoadOlderButton(container) {
+        if (!container) return;
+        let btn = container.querySelector('.load-older-messages-btn');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.className = 'load-older-messages-btn';
+            btn.type = 'button';
+            btn.innerHTML = '<i class="fas fa-chevron-up"></i> Load older messages';
+            btn.style.cssText = 'display:block;width:100%;padding:10px;margin:0 0 8px 0;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#475569;cursor:pointer;';
+            btn.addEventListener('click', () => this.loadOlderDriverMessages());
+            container.insertBefore(btn, container.firstChild);
+        }
+        btn.style.display = this._driverHasMoreOlder ? 'block' : 'none';
+    }
+
+    async loadOlderDriverMessages() {
+        const driverId = this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id;
+        if (!driverId || !this._driverCursorOldest || !this._driverHasMoreOlder) return;
+        const container = document.getElementById('messagesContainer');
+        if (!container) return;
+
+        const baseUrl = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') : '';
+        const btn = container.querySelector('.load-older-messages-btn');
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages?limit=50&before=${encodeURIComponent(this._driverCursorOldest)}`);
+            if (!res.ok) throw new Error('Fetch failed');
+            const data = await res.json();
+            const older = Array.isArray(data.messages) ? data.messages : [];
+            this._driverHasMoreOlder = !!data.hasMore;
+            if (older.length === 0) {
+                if (btn) btn.disabled = false;
+                this._ensureLoadOlderButton(container);
+                return;
+            }
+            const existing = this.messages[driverId] || [];
+            const byId = new Map();
+            [...older, ...existing].forEach(m => byId.set(m.id || m.timestamp, m));
+            const merged = Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+            const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+            this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
+            this.saveMessagesToStorageDebounced();
+            this._driverCursorOldest = merged[0] && merged[0].timestamp;
+
+            const insertPoint = container.querySelector('.load-older-messages-btn');
+            const next = insertPoint ? insertPoint.nextElementSibling : container.firstChild;
+            for (let i = older.length - 1; i >= 0; i--) {
+                const el = this.createMessageBubble(older[i]);
+                if (el && insertPoint) container.insertBefore(el, next);
+                else if (el) container.appendChild(el);
+            }
+        } catch (e) {
+            console.warn('Load older messages failed:', e.message);
+        }
+        if (btn) btn.disabled = false;
+        this._ensureLoadOlderButton(container);
     }
 
     displayDriverMessage(messageData, scroll = true) {
@@ -573,7 +719,10 @@ class EnhancedMessagingSystem {
 
         this.addMessage(this.currentDriverId, messageData);
         this.displayAdminMessage(messageData);
-        
+        if (messageData.timestamp && (!this._adminCursorNewest || new Date(messageData.timestamp) > new Date(this._adminCursorNewest))) {
+            this._adminCursorNewest = messageData.timestamp;
+        }
+
         // Clear input
         input.value = '';
         const sendBtn = document.getElementById('adminSendBtn');
@@ -647,10 +796,50 @@ class EnhancedMessagingSystem {
         const container = document.getElementById('adminMessagesHistory');
         if (!container) return;
 
-        // Fetch all previous communications from server so manager sees full history
+        if (this._adminDriverIdForCursor !== driverId) {
+            this._adminCursorOldest = null;
+            this._adminCursorNewest = null;
+            this._adminHasMoreOlder = false;
+            this._adminInitialLoadDone = false;
+            this._adminDriverIdForCursor = driverId;
+        }
+
         const baseUrl = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') : '';
+        // WhatsApp-style: delta only when reopening same driver (append new, no full re-render)
+        if (this._adminInitialLoadDone && this._adminCursorNewest) {
+            try {
+                const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages?limit=100&since=${encodeURIComponent(this._adminCursorNewest)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const newMessages = Array.isArray(data.messages) ? data.messages : [];
+                    if (newMessages.length > 0) {
+                        const existing = this.messages[driverId] || [];
+                        const byId = new Map();
+                        existing.forEach(m => byId.set(m.id || m.timestamp, m));
+                        newMessages.forEach(m => byId.set(m.id || m.timestamp, m));
+                        const merged = Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+                        const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+                        this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
+                        this.saveMessagesToStorageDebounced();
+                        this._adminCursorNewest = merged[merged.length - 1] && merged[merged.length - 1].timestamp;
+                        newMessages.forEach(msg => {
+                            if (!container.querySelector('[data-message-id="' + (msg.id || msg.timestamp) + '"]')) {
+                                this.displayAdminMessage(msg, false);
+                            }
+                        });
+                        this.scrollToBottom(container);
+                    }
+                    this.updateMessageStatistics();
+                    this.markMessagesAsRead(driverId, 'admin');
+                    return;
+                }
+            } catch (e) {
+                console.warn('Admin delta fetch failed:', e.message);
+            }
+        }
+
         try {
-            const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages`);
+            const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages?limit=50`);
             if (res.ok) {
                 const data = await res.json();
                 const serverMessages = Array.isArray(data.messages) ? data.messages : [];
@@ -664,41 +853,106 @@ class EnhancedMessagingSystem {
                 const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
                 this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
                 this.saveMessagesToStorageDebounced();
+                const full = this.messages[driverId] || [];
+                this._adminHasMoreOlder = full.length > 50 || !!data.hasMore;
+                this._adminInitialLoadDone = true;
+                if (full.length) {
+                    this._adminCursorOldest = full[0].timestamp;
+                    this._adminCursorNewest = full[full.length - 1].timestamp;
+                }
             }
         } catch (e) {
             console.warn('Could not load message history from server:', e.message);
         }
 
-        const messages = this.messages[driverId] || [];
+        const full = this.messages[driverId] || [];
+        const messages = full.length > 50 ? full.slice(-50) : full;
         container.innerHTML = '';
+        this._ensureAdminLoadOlderButton(container, driverId);
 
         if (messages.length === 0) {
-            container.innerHTML = `
-                <div class="no-messages-state">
-                    <i class="fas fa-comment-dots"></i>
-                    <p>No messages yet</p>
-                    <small>Start a conversation with the driver</small>
-                </div>
-            `;
+            const noMsg = document.createElement('div');
+            noMsg.className = 'no-messages-state';
+            noMsg.innerHTML = '<i class="fas fa-comment-dots"></i><p>No messages yet</p><small>Start a conversation with the driver</small>';
+            container.appendChild(noMsg);
         } else {
-            const BATCH = 40;
-            if (messages.length <= BATCH) {
-                messages.forEach(message => this.displayAdminMessage(message, false));
-                this.scrollToBottom(container);
-            } else {
-                let idx = 0;
-                const renderBatch = () => {
-                    const end = Math.min(idx + BATCH, messages.length);
-                    for (; idx < end; idx++) this.displayAdminMessage(messages[idx], false);
-                    if (idx < messages.length) requestAnimationFrame(renderBatch);
-                    else this.scrollToBottom(container);
-                };
-                requestAnimationFrame(renderBatch);
-            }
+            const BATCH = 25;
+            let idx = 0;
+            const renderNext = () => {
+                const end = Math.min(idx + BATCH, messages.length);
+                for (let i = idx; i < end; i++) this.displayAdminMessage(messages[i], false);
+                idx = end;
+                if (idx < messages.length) requestAnimationFrame(renderNext);
+                else this.scrollToBottom(container);
+            };
+            renderNext();
         }
 
         this.updateMessageStatistics();
         this.markMessagesAsRead(driverId, 'admin');
+    }
+
+    _ensureAdminLoadOlderButton(container, driverId) {
+        if (!container) return;
+        let wrap = container.querySelector('.admin-load-older-wrap');
+        if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.className = 'admin-load-older-wrap';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'load-older-messages-btn';
+            btn.innerHTML = '<i class="fas fa-chevron-up"></i> Load older messages';
+            btn.style.cssText = 'display:block;width:100%;padding:10px;margin:0 0 8px 0;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#475569;cursor:pointer;';
+            btn.addEventListener('click', () => this.loadOlderAdminMessages());
+            wrap.appendChild(btn);
+            container.insertBefore(wrap, container.firstChild);
+        }
+        wrap.style.display = this._adminHasMoreOlder ? 'block' : 'none';
+    }
+
+    async loadOlderAdminMessages() {
+        const driverId = this.currentDriverId;
+        if (!driverId || !this._adminCursorOldest || !this._adminHasMoreOlder) return;
+        const container = document.getElementById('adminMessagesHistory');
+        if (!container) return;
+
+        const baseUrl = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') : '';
+        const wrap = container.querySelector('.admin-load-older-wrap');
+        const btn = wrap ? wrap.querySelector('button') : null;
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages?limit=50&before=${encodeURIComponent(this._adminCursorOldest)}`);
+            if (!res.ok) throw new Error('Fetch failed');
+            const data = await res.json();
+            const older = Array.isArray(data.messages) ? data.messages : [];
+            this._adminHasMoreOlder = !!data.hasMore;
+            if (older.length === 0) {
+                if (btn) btn.disabled = false;
+                this._ensureAdminLoadOlderButton(container, driverId);
+                return;
+            }
+            const existing = this.messages[driverId] || [];
+            const byId = new Map();
+            [...older, ...existing].forEach(m => byId.set(m.id || m.timestamp, m));
+            const merged = Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+            const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+            this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
+            this.saveMessagesToStorageDebounced();
+            this._adminCursorOldest = merged[0] && merged[0].timestamp;
+
+            const next = wrap ? wrap.nextElementSibling : container.firstChild;
+            for (let i = older.length - 1; i >= 0; i--) {
+                const el = this.createMessageBubble(older[i], true);
+                if (el && wrap) container.insertBefore(el, next);
+                else if (el) container.appendChild(el);
+            }
+            this.updateMessageStatistics();
+        } catch (e) {
+            console.warn('Load older admin messages failed:', e.message);
+        }
+        if (btn) btn.disabled = false;
+        this._ensureAdminLoadOlderButton(container, driverId);
     }
 
     displayAdminMessage(messageData, scroll = true) {
@@ -799,7 +1053,7 @@ class EnhancedMessagingSystem {
     createMessageBubble(messageData, isAdminView = false) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message-bubble ${messageData.sender === (isAdminView ? 'admin' : 'driver') ? 'sent' : 'received'}`;
-        messageDiv.setAttribute('data-message-id', messageData.id);
+        messageDiv.setAttribute('data-message-id', messageData.id || messageData.timestamp || '');
 
         const isEmergency = messageData.type === 'emergency';
         const bubbleClass = isEmergency ? 'message-content emergency' : 'message-content';
