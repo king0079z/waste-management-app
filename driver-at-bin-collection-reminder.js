@@ -1,9 +1,8 @@
 /**
  * Driver-at-Bin Auto-Collection (World-class)
- * When GPS shows the driver was at a bin but they didn't tap "Mark as collected",
- * the system automatically registers the collection for this driver (assigned or ad-hoc).
- * - Uses shared config (auto-collection-config.js) and cooldown so no double-record with proximity system.
- * - Configurable: nearBinMeters, positionHistorySize, checkIntervalDriverAtBinMs, cooldownMs.
+ * Records a collection only when the driver was near the bin AND the bin fill % changed (dropped).
+ * If the bin level % was not changed, no collection is recorded.
+ * - Uses shared config (auto-collection-config.js) and cooldown.
  */
 (function() {
     'use strict';
@@ -19,6 +18,8 @@
 
     let positionHistory = [];
     let checkTimer = null;
+    // Track bins where driver is "at bin" and we have seen fill; only record when fill drops
+    var atBinCandidates = {};
 
     function getCurrentUser() {
         return typeof authManager !== 'undefined' && authManager.getCurrentUser ? authManager.getCurrentUser() : null;
@@ -83,6 +84,11 @@
         }
     }
 
+    function getBinFill(bin) {
+        var f = bin.fill != null ? bin.fill : bin.fillLevel;
+        return typeof f === 'number' ? f : 0;
+    }
+
     function checkDriverAtBin() {
         var user = getCurrentUser();
         if (!user || user.type !== 'driver') return;
@@ -97,23 +103,48 @@
         if (positionHistory.length < cfg.positionHistorySize) return;
 
         var bins = getBins();
+        var binsNearNow = [];
         for (var i = 0; i < bins.length; i++) {
             var bin = bins[i];
             if (!bin.lat || !bin.lng) continue;
-            if (wasDriverRecentlyAtBin(user.id, bin.id)) continue;
-            if (wasAutoRecordedRecently(bin.id)) continue;
-
             var allNear = true;
             for (var j = 0; j < positionHistory.length; j++) {
                 var d = calculateDistance(positionHistory[j].lat, positionHistory[j].lng, bin.lat, bin.lng);
                 if (d > cfg.nearBinKm) { allNear = false; break; }
             }
-            if (allNear) {
+            if (allNear) binsNearNow.push(bin.id);
+        }
+        // Clear candidates for bins driver is no longer near
+        Object.keys(atBinCandidates).forEach(function(binId) {
+            if (binsNearNow.indexOf(binId) === -1) delete atBinCandidates[binId];
+        });
+
+        for (var i = 0; i < bins.length; i++) {
+            var bin = bins[i];
+            if (!bin.lat || !bin.lng || binsNearNow.indexOf(bin.id) === -1) continue;
+            if (wasDriverRecentlyAtBin(user.id, bin.id)) continue;
+            if (wasAutoRecordedRecently(bin.id)) continue;
+
+            var currentFill = getBinFill(bin);
+            var cand = atBinCandidates[bin.id];
+            if (!cand) {
+                atBinCandidates[bin.id] = { firstFill: currentFill, firstSeen: Date.now() };
+                continue;
+            }
+            // Only record if bin fill % changed (dropped) after driver was near
+            var fillDropped = currentFill < cand.firstFill - 1 || currentFill === 0;
+            if (fillDropped) {
                 autoRecordCollection(bin, user.id);
+                delete atBinCandidates[bin.id];
                 positionHistory = [];
                 return;
             }
         }
+        // Prune old candidates (e.g. > 5 min) to avoid unbounded growth
+        var now = Date.now();
+        Object.keys(atBinCandidates).forEach(function(binId) {
+            if (now - atBinCandidates[binId].firstSeen > 5 * 60 * 1000) delete atBinCandidates[binId];
+        });
     }
 
     function startReminder() {
@@ -129,6 +160,7 @@
             checkTimer = null;
         }
         positionHistory = [];
+        atBinCandidates = {};
     }
 
     function init() {

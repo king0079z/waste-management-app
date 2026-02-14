@@ -832,6 +832,7 @@ class EnhancedDriverSystemComplete {
         }
     }
     
+    // Only record collection when bin fill % changed (dropped) after driver was near; no collection if level unchanged.
     async checkAutoCollectionTrigger(bin) {
         const proximityData = this.nearbyBins.get(bin.id);
         if (!proximityData) return;
