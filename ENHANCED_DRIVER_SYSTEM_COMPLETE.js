@@ -820,6 +820,7 @@ class EnhancedDriverSystemComplete {
                     });
                     console.log(`📍 Driver entered proximity of bin ${bin.id} (${distance.toFixed(1)}m away)`);
                 }
+                if (typeof window.recordDriverNearBin === 'function') window.recordDriverNearBin(bin.id);
                 
                 await this.checkAutoCollectionTrigger(bin);
             } else {

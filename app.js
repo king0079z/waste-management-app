@@ -4530,6 +4530,48 @@ window.markBinCollected = async function(binId, options) {
     return true;
 };
 
+// ---------------------------------------------------------------------------
+// Delayed sensor attribution: sensor sends fill data ~30 min after collection.
+// When driver had already left, we still attribute the drop to them if they
+// were near the bin within the last (sensor interval + 15 min).
+// ---------------------------------------------------------------------------
+if (typeof window.__driverNearBinLog !== 'object') window.__driverNearBinLog = {};
+window.recordDriverNearBin = function(binId) {
+    if (binId) window.__driverNearBinLog[binId] = Date.now();
+};
+window.checkDelayedSensorUpdates = function(prevBins, newBins) {
+    if (!window.authManager || !window.dataManager) return;
+    const user = window.authManager.getCurrentUser && window.authManager.getCurrentUser();
+    if (!user || user.type !== 'driver') return;
+    const log = window.__driverNearBinLog;
+    if (!log || typeof log !== 'object') return;
+    const prevMap = Array.isArray(prevBins) ? Object.fromEntries((prevBins || []).map(b => [b.id, b])) : (prevBins || {});
+    const newList = Array.isArray(newBins) ? newBins : Object.values(newBins || {});
+    const intervalMin = (typeof window.__sensorReportingIntervalMinutes === 'number' ? window.__sensorReportingIntervalMinutes : 30);
+    const attributionWindowMs = (intervalMin + 15) * 60 * 1000;
+    const now = Date.now();
+    newList.forEach(function(bin) {
+        const binId = bin.id;
+        if (!binId) return;
+        const newFill = bin.fill != null ? bin.fill : (bin.fillLevel != null ? bin.fillLevel : -1);
+        const prev = prevMap[binId];
+        const prevFill = prev && (prev.fill != null || prev.fillLevel != null) ? (prev.fill != null ? prev.fill : prev.fillLevel) : -1;
+        const justEmptied = newFill <= 5 && (prevFill < 0 || prevFill > 5);
+        if (!justEmptied) return;
+        const atTime = log[binId];
+        if (atTime == null || (now - atTime) > attributionWindowMs) return;
+        if (window.autoCollectionCooldown && typeof window.autoCollectionCooldown.isBinInCooldown === 'function' && window.autoCollectionCooldown.isBinInCooldown(binId)) return;
+        if (typeof window.markBinCollected !== 'function') return;
+        if (window.autoCollectionCooldown && typeof window.autoCollectionCooldown.setCooldown === 'function') window.autoCollectionCooldown.setCooldown(binId);
+        delete log[binId];
+        window.markBinCollected(binId, { isAutoCollection: true });
+        if (window.app && window.app.showAlert) window.app.showAlert('Collection recorded (sensor)', 'Bin ' + binId + ' fill update received – collection attributed to you.', 'success', 5000);
+    });
+    Object.keys(log).forEach(function(binId) {
+        if (now - log[binId] > attributionWindowMs) delete log[binId];
+    });
+};
+
 // Global function to view driver history (for debugging and user reference)
 window.viewDriverHistory = function() {
     const currentUser = authManager.getCurrentUser();

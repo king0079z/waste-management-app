@@ -742,8 +742,16 @@ class WebSocketManager {
                         }
                     });
                 }
-                window.dataManager.setData(key, data.data[key]);
-                if (key === 'bins') binsUpdated = true;
+                if (key === 'bins') {
+                    const prevBins = window.dataManager.getBins ? window.dataManager.getBins().slice() : [];
+                    window.dataManager.setData(key, data.data[key]);
+                    binsUpdated = true;
+                    if (typeof window.checkDelayedSensorUpdates === 'function') {
+                        window.checkDelayedSensorUpdates(prevBins, data.data[key]);
+                    }
+                } else {
+                    window.dataManager.setData(key, data.data[key]);
+                }
                 // Keep driver route cache in sync when server sends route updates (e.g. admin deleted a route)
                 if (key === 'routes' && Array.isArray(data.data[key])) {
                     const routes = data.data[key];

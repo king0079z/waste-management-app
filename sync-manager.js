@@ -286,7 +286,11 @@ class SyncManager {
                                 console.log(`🛡️ Excluding ${deletedBins.length} deleted bins from server list`);
                             }
                             
+                            var prevBinsForAttribution = (dataManager.getData(key) || []).slice();
                             dataManager.setData(key, finalBins);
+                            if (typeof window.checkDelayedSensorUpdates === 'function') {
+                                window.checkDelayedSensorUpdates(prevBinsForAttribution, finalBins);
+                            }
                             console.log(`🔄 Merged ${key}: ${finalBins.length} items (${localData.length} local, ${serverData.length} server)`);
                             if (finalBins.length < serverData.length) {
                                 console.log(`🗑️ Removed ${serverData.length - finalBins.length} deleted bin(s) from server data`);

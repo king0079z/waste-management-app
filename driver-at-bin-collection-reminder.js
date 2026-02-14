@@ -129,8 +129,10 @@
             var cand = atBinCandidates[bin.id];
             if (!cand) {
                 atBinCandidates[bin.id] = { firstFill: currentFill, firstSeen: Date.now() };
+                if (typeof window.recordDriverNearBin === 'function') window.recordDriverNearBin(bin.id);
                 continue;
             }
+            if (typeof window.recordDriverNearBin === 'function') window.recordDriverNearBin(bin.id);
             // Only record if bin fill % changed (dropped) after driver was near
             var fillDropped = currentFill < cand.firstFill - 1 || currentFill === 0;
             if (fillDropped) {
