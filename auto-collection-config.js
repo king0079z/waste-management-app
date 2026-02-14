@@ -27,7 +27,9 @@
         // Proximity: also trigger when fill drops from above this to below minFillDropPercent
         fillWasAbovePercent: 20,
         // Shared: do not auto-record same bin again within this period (ms) — 2 hours
-        cooldownMs: 2 * 60 * 60 * 1000
+        cooldownMs: 2 * 60 * 60 * 1000,
+        // Info: sensor fill data is sent every 30 minutes — fill-based auto-collection may lag until next report
+        sensorReportIntervalMs: 30 * 60 * 1000
     };
 
     function loadConfig() {

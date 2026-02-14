@@ -17,7 +17,8 @@
         minDwellNearBinMs: 12000,
         minFillDropPercent: 0,
         fillWasAbovePercent: 20,
-        cooldownMs: 2 * 60 * 60 * 1000
+        cooldownMs: 2 * 60 * 60 * 1000,
+        sensorReportIntervalMs: 30 * 60 * 1000
     };
 
     function loadConfig() {
