@@ -148,32 +148,44 @@ class WakeUpRecoverySystem {
                 if (typeof window.updateWebSocketClientInfo === 'function') {
                     setTimeout(function() { window.updateWebSocketClientInfo(); }, 500);
                 }
-                function runSyncAndChat() {
+                function runSyncOnly() {
                     if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
-                        syncManager.syncFromServer().then(function() {
-                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                                window.app.loadDriverRoutes();
-                            }
-                        }).catch(function() {
-                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                                window.app.loadDriverRoutes();
-                            }
-                        });
-                    } else if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                        window.app.loadDriverRoutes();
+                        syncManager.syncFromServer().then(runRoutesAndChat).catch(runRoutesAndChat);
+                    } else {
+                        runRoutesAndChat();
                     }
-                    if (user && user.id && window.enhancedMessaging) {
-                        if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
-                            window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
-                        } else if (typeof window.enhancedMessaging.loadDriverMessages === 'function') {
-                            window.enhancedMessaging.loadDriverMessages(user.id);
-                        }
+                }
+                function runRoutesAndChat() {
+                    if (typeof requestIdleCallback !== 'undefined') {
+                        requestIdleCallback(function() {
+                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                                window.app.loadDriverRoutes();
+                            }
+                            if (user && user.id && window.enhancedMessaging) {
+                                if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
+                                    window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
+                                } else if (typeof window.enhancedMessaging.loadDriverMessages === 'function') {
+                                    window.enhancedMessaging.loadDriverMessages(user.id);
+                                }
+                            }
+                        }, { timeout: 2000 });
+                    } else {
+                        setTimeout(function() {
+                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                                window.app.loadDriverRoutes();
+                            }
+                            if (user && user.id && window.enhancedMessaging) {
+                                if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
+                                    window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
+                                }
+                            }
+                        }, 0);
                     }
                 }
                 if (typeof requestIdleCallback !== 'undefined') {
-                    requestIdleCallback(runSyncAndChat, { timeout: 1500 });
+                    requestIdleCallback(runSyncOnly, { timeout: 1500 });
                 } else {
-                    setTimeout(runSyncAndChat, 0);
+                    setTimeout(runSyncOnly, 0);
                 }
             } catch (e) {
                 console.warn('Driver reconnection step failed:', e && e.message);

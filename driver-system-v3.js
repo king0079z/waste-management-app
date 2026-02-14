@@ -13,6 +13,10 @@ class DriverSystemV3 {
         this.isProcessingRouteAction = false;
         this.lastRouteActionTime = 0;
         this.routeActionDebounceTime = 2000; // 2 seconds
+        this._lastSyncDriverStatusAt = 0;
+        this._lastSyncDriverUpdateAt = 0;
+        this._minStatusIntervalMs = 2500;
+        this._minUpdateIntervalMs = 3000;
         
         console.log('🎯 Initializing Driver System V3.0 - Complete Reconstruction');
         this.init();
@@ -1495,6 +1499,9 @@ class DriverSystemV3 {
     // Sync driver status specifically to server
     async syncDriverStatusToServer() {
         if (!this.currentUser) return;
+        const now = Date.now();
+        if (now - this._lastSyncDriverStatusAt < this._minStatusIntervalMs) return;
+        this._lastSyncDriverStatusAt = now;
 
         try {
             const response = await fetch(`/api/driver/${this.currentUser.id}/status`, {
@@ -1548,6 +1555,9 @@ class DriverSystemV3 {
     // Sync complete driver data to server - FIXED TO PRESERVE STATUS
     async syncCompleteDriverDataToServer() {
         if (!this.currentUser) return;
+        const now = Date.now();
+        if (now - this._lastSyncDriverUpdateAt < this._minUpdateIntervalMs) return;
+        this._lastSyncDriverUpdateAt = now;
 
         try {
             // CRITICAL FIX: Get movement status from current user object, not dataManager

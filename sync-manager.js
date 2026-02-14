@@ -212,26 +212,23 @@ class SyncManager {
             const result = await response.json();
             if (result.success && result.data) {
                 let hasChanges = false;
-                
-                // ENHANCED: Smart merge with change detection
-                Object.keys(result.data).forEach(key => {
-                    if (result.data[key] !== undefined && key !== 'lastUpdate') {
-                        const serverData = result.data[key];
-                        const localData = dataManager.getData(key);
-                        
-                        // Check if data actually changed
-                        if (!this.hasDataChanged(key, serverData, localData)) {
-                            // Silently skip unchanged data to reduce console noise
-                            return;
-                        }
-                        
-                        // For users array, merge instead of overwrite to preserve demo accounts
-                        if (key === 'users' && Array.isArray(serverData) && Array.isArray(localData)) {
+                const keys = Object.keys(result.data).filter(k => result.data[k] !== undefined && k !== 'lastUpdate');
+                const yieldToMain = () => new Promise(r => setTimeout(r, 0));
+
+                // Process one key per tick so main thread can respond to freeze-detector ping (avoids 15s freeze)
+                for (let idx = 0; idx < keys.length; idx++) {
+                    const key = keys[idx];
+                    const serverData = result.data[key];
+                    const localData = dataManager.getData(key);
+
+                    if (!this.hasDataChanged(key, serverData, localData)) continue;
+
+                    // For users array, merge instead of overwrite to preserve demo accounts
+                    if (key === 'users' && Array.isArray(serverData) && Array.isArray(localData)) {
                             if (serverData.length === 0 && localData.length > 0) {
                                 console.log(`📝 Preserving local ${key} data (${localData.length} items)`);
-                                // Keep local data - DO NOT call syncToServer here to avoid loop
-                                // The data will be synced later when user makes actual changes
-                                return;
+                                await yieldToMain();
+                                continue;
                             }
                             
                             // Merge users by ID/username
@@ -389,8 +386,8 @@ class SyncManager {
                                 }
                             }
                         }
-                    }
-                });
+                    await yieldToMain();
+                }
 
                 this.lastSyncTime = result.timestamp || Date.now();
                 this.retryCount = 0;
@@ -402,10 +399,15 @@ class SyncManager {
                     document.dispatchEvent(new CustomEvent('syncCompleted', { detail: { hasChanges } }));
                 }
                 
-                // Only trigger UI updates if there were actual changes
+                // Defer UI updates so main thread can process pings (avoids main_thread_freeze report)
                 if (hasChanges) {
                     console.log('🎯 Changes detected - triggering UI updates');
-                    this.triggerUIUpdates();
+                    const self = this;
+                    if (typeof requestIdleCallback !== 'undefined') {
+                        requestIdleCallback(() => self.triggerUIUpdates(), { timeout: 2000 });
+                    } else {
+                        setTimeout(() => self.triggerUIUpdates(), 0);
+                    }
                 }
                 // Silently skip UI updates when no changes detected
                 
