@@ -2510,6 +2510,50 @@ class WasteManagementApp {
                 element.textContent = value;
             }
         });
+
+        // City Dashboard (Smart City Command Center) – world-class metrics
+        const bins = typeof dataManager !== 'undefined' ? dataManager.getBins() : [];
+        const avgFill = bins.length ? bins.reduce((s, b) => s + (b.fill || 0), 0) / bins.length : 0;
+        const cleanlinessIndex = Math.round(Math.max(0, Math.min(100, 100 - avgFill)));
+        const collectionsTarget = 50;
+        const complaintsCap = 20;
+        const costPct = Math.round(analytics.costReduction || 0);
+        const satisfactionPct = Math.round(analytics.citizenSatisfaction || 0);
+        const carbonPct = Math.round(analytics.carbonReduction || 0);
+        const avgResponse = Math.round(analytics.avgResponseTime || 0);
+
+        const cityElements = {
+            'cleanlinessIndex': `${cleanlinessIndex}%`,
+            'todayCollections': stats.todayCollections,
+            'activeComplaintsCount': stats.activeComplaints,
+            'costReduction': `${costPct}%`,
+            'citizenSatisfaction': `${satisfactionPct}%`,
+            'carbonReduction': carbonPct ? `-${carbonPct}%` : '0%',
+            'avgResponseTime': `${avgResponse}min`
+        };
+        Object.entries(cityElements).forEach(([id, value]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        });
+
+        // Progress bars (width %)
+        const progressUpdates = [
+            ['cleanlinessProgress', cleanlinessIndex],
+            ['collectionsProgress', Math.min(100, Math.round((stats.todayCollections / collectionsTarget) * 100))],
+            ['complaintsProgress', Math.min(100, Math.round((stats.activeComplaints / complaintsCap) * 100))],
+            ['costProgress', Math.min(100, costPct)]
+        ];
+        progressUpdates.forEach(([id, pct]) => {
+            const bar = document.getElementById(id);
+            if (bar && bar.style) bar.style.width = `${pct}%`;
+        });
+
+        // Last updated timestamp for dashboard
+        const lastUpdatedEl = document.getElementById('dashboardLastUpdated');
+        if (lastUpdatedEl) {
+            lastUpdatedEl.textContent = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            lastUpdatedEl.setAttribute('datetime', new Date().toISOString());
+        }
     }
 
     // Helper methods for driver routes

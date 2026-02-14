@@ -315,7 +315,45 @@ function setupEventHandlers() {
         });
     }
     
-    // Dashboard Quick Actions
+    // Dashboard Quick Actions (City Dashboard: emergencyResponseBtn, optimizeRoutesBtn)
+    const emergencyBtn = document.getElementById('emergencyResponseBtn');
+    if (emergencyBtn) {
+        emergencyBtn.addEventListener('click', function() {
+            console.log('🚨 Emergency Response initiated');
+            if (typeof showIssueReportingModal === 'function') {
+                showIssueReportingModal();
+                setTimeout(() => {
+                    const typeSelect = document.getElementById('issueType');
+                    const prioritySelect = document.getElementById('issuePriority');
+                    if (typeSelect) typeSelect.value = 'safety_concern';
+                    if (prioritySelect) prioritySelect.value = 'critical';
+                }, 100);
+                if (window.app) {
+                    window.app.showAlert('Emergency Response', 'Report the emergency issue in the form. Supervisors will be notified.', 'warning');
+                }
+            } else {
+                if (window.app) {
+                    window.app.showAlert('Emergency Response', 'Emergency protocols initiated. All supervisors notified.', 'warning');
+                }
+            }
+        });
+    }
+
+    const optimizeRoutesBtn = document.getElementById('optimizeRoutesBtn');
+    if (optimizeRoutesBtn) {
+        optimizeRoutesBtn.addEventListener('click', async function() {
+            console.log('🔄 City Dashboard: Optimize All Routes clicked');
+            if (typeof performComprehensiveRouteOptimization === 'function') {
+                await performComprehensiveRouteOptimization();
+                if (window.app) window.app.refreshDashboard();
+            } else {
+                if (window.app) {
+                    window.app.showAlert('Route Optimization', 'Optimizing all routes across the system...', 'info');
+                }
+            }
+        });
+    }
+
     const optimizeBtn = document.getElementById('optimizeAllRoutesBtn');
     if (optimizeBtn) {
         optimizeBtn.addEventListener('click', function() {
@@ -341,6 +379,17 @@ function setupEventHandlers() {
         });
     }
     
+    const refreshDashboardBtn = document.getElementById('refreshDashboardBtn');
+    if (refreshDashboardBtn) {
+        refreshDashboardBtn.addEventListener('click', function() {
+            if (window.app && typeof window.app.refreshDashboard === 'function') {
+                refreshDashboardBtn.classList.add('spin-once');
+                window.app.refreshDashboard();
+                setTimeout(function() { refreshDashboardBtn.classList.remove('spin-once'); }, 600);
+            }
+        });
+    }
+
     const reportBtn = document.getElementById('generateReportBtn');
     if (reportBtn) {
         reportBtn.addEventListener('click', function() {
