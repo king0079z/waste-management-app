@@ -121,17 +121,18 @@ class WakeUpRecoverySystem {
             self.hideDriverReconnectingOverlay();
         };
 
+        var WAKE_SYNC_TIMEOUT_MS = 2500;
         setTimeout(function doReconnect() {
             try {
                 if (window.webSocketManager && typeof window.webSocketManager.reconnect === 'function') {
-                    window.webSocketManager.reconnect();
+                    window.webSocketManager.reconnect(true);
                 }
                 if (typeof window.updateWebSocketClientInfo === 'function') {
-                    setTimeout(() => { window.updateWebSocketClientInfo(); }, 600);
+                    setTimeout(function () { window.updateWebSocketClientInfo(); }, 400);
                 }
                 if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
-                    const p = syncManager.syncFromServer();
-                    const onDone = () => {
+                    var syncPromise = syncManager.syncFromServer({ force: true, timeoutMs: WAKE_SYNC_TIMEOUT_MS });
+                    var onDone = function () {
                         if (isDriver && window.app && typeof window.app.loadDriverRoutes === 'function') {
                             window.app.loadDriverRoutes();
                         }
@@ -143,9 +144,11 @@ class WakeUpRecoverySystem {
                         }
                         done();
                     };
-                    if (p && typeof p.then === 'function') {
-                        p.then(onDone).catch(onDone);
-                        setTimeout(done, 3500);
+                    if (syncPromise && typeof syncPromise.then === 'function') {
+                        var timeoutPromise = new Promise(function (resolve) {
+                            setTimeout(function () { resolve(); }, WAKE_SYNC_TIMEOUT_MS);
+                        });
+                        Promise.race([syncPromise, timeoutPromise]).then(onDone).catch(onDone);
                     } else {
                         onDone();
                     }
@@ -163,7 +166,7 @@ class WakeUpRecoverySystem {
                 }
                 if (isDriver) {
                     if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
-                        try { window.mapManager.startDriverTracking(); } catch (e) { /* skip if not driver context */ }
+                        try { window.mapManager.startDriverTracking(); } catch (e) { }
                     }
                     if (user.id && window.enhancedMessaging && typeof window.enhancedMessaging.loadDriverMessages === 'function') {
                         window.enhancedMessaging.loadDriverMessages(user.id);
@@ -173,7 +176,7 @@ class WakeUpRecoverySystem {
                 console.warn('Reconnection step failed:', e && e.message);
                 done();
             }
-        }, 400);
+        }, 100);
     }
     
     showDriverReconnectingOverlay() {

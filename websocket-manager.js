@@ -148,7 +148,8 @@ class WebSocketManager {
         }
     }
     
-    connect() {
+    connect(connectionTimeoutMs) {
+        if (connectionTimeoutMs == null) connectionTimeoutMs = 5000;
         try {
             // Check if we're in a serverless environment
             const isServerless = window.location.hostname.includes('vercel.app') || 
@@ -167,14 +168,13 @@ class WebSocketManager {
             console.log(`🔌 Connecting to WebSocket: ${wsUrl}`);
             this.ws = new WebSocket(wsUrl);
             
-            // Set a connection timeout
             const connectionTimeout = setTimeout(() => {
                 if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
                     console.log('⏰ WebSocket connection timeout, switching to fallback');
                     this.ws.close();
                     this.initializeFallback();
                 }
-            }, 5000);
+            }, connectionTimeoutMs);
             
             this.ws.onopen = (event) => {
                 clearTimeout(connectionTimeout);
@@ -1036,8 +1036,8 @@ class WebSocketManager {
         };
     }
     
-    // Manual reconnect (e.g. after wake-from-sleep). Close old socket first; open new one after a short delay to avoid "closed before connection established" errors.
-    reconnect() {
+    // Manual reconnect. Option: quick=true for wake-from-sleep (no delay, 2.5s connection timeout for fast fallback).
+    reconnect(quick) {
         const oldWs = this.ws;
         this.ws = null;
         if (oldWs) {
@@ -1046,7 +1046,13 @@ class WebSocketManager {
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
         const self = this;
-        setTimeout(function () { self.connect(); }, 80);
+        const delay = quick ? 0 : 80;
+        const timeoutMs = quick ? 2500 : 5000;
+        if (delay === 0) {
+            self.connect(timeoutMs);
+        } else {
+            setTimeout(function () { self.connect(timeoutMs); }, delay);
+        }
     }
     
     destroy() {

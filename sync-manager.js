@@ -166,18 +166,18 @@ class SyncManager {
         }
     }
 
-    // Sync all data from server to local
-    async syncFromServer() {
+    // Sync all data from server to local. options: { force: true } to skip throttle (e.g. wake-from-sleep), { timeoutMs: 2500 } for shorter fetch timeout.
+    async syncFromServer(options) {
         if (!this.syncEnabled || !this.isOnline) return;
         
-        // ENHANCED: Prevent concurrent syncing
         if (this.isSyncing) {
             return false;
         }
         
-        // Throttle: Skip if we synced recently
         const now = Date.now();
-        if (now - this.lastSyncFromServer < this.minSyncInterval) {
+        const force = options && options.force === true;
+        const timeoutMs = (options && options.timeoutMs) || 8000;
+        if (!force && now - this.lastSyncFromServer < this.minSyncInterval) {
             return false;
         }
         
@@ -188,10 +188,9 @@ class SyncManager {
         try {
             console.log('📥 Syncing from server...');
             
-            // Enhanced connection health check with timeout
             const startTime = Date.now();
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             
             const response = await fetch(`${this.baseUrl}/api/data/sync`, {
                 method: 'GET',
