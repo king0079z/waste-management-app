@@ -11,9 +11,15 @@ class EnhancedMessagingSystem {
         this.messageSound = null;
         this.isMessagingExpanded = true;
         this.driverMessagePollInterval = null; // Poll for new messages when driver (mobile WebSocket can be suspended)
-        this.pendingDriverImage = null;
-        this.pendingAdminImage = null;
-
+        // Debounce and guard to prevent multiple concurrent loads from freezing the UI (e.g. when tab returns from background)
+        this._loadDriverMessagesDebounceTimer = null;
+        this._loadDriverMessagesInProgress = false;
+        this._loadDriverMessagesPendingId = null;
+        this._loadAdminMessagesDebounceTimer = null;
+        this._loadAdminMessagesInProgress = false;
+        this._loadAdminMessagesPendingId = null;
+        this._handleStorageUpdateTimer = null;
+        
         this.init();
     }
 
@@ -83,29 +89,6 @@ class EnhancedMessagingSystem {
             }
         });
 
-        // Driver photo input
-        const driverPhotoInput = document.getElementById('driverPhotoInput');
-        if (driverPhotoInput) {
-            driverPhotoInput.addEventListener('change', (e) => {
-                const file = e.target.files && e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    this.processAndSetDriverImage(file);
-                }
-                e.target.value = '';
-            });
-        }
-        // Admin photo input
-        const adminPhotoInput = document.getElementById('adminPhotoInput');
-        if (adminPhotoInput) {
-            adminPhotoInput.addEventListener('change', (e) => {
-                const file = e.target.files && e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    this.processAndSetAdminImage(file);
-                }
-                e.target.value = '';
-            });
-        }
-
         // Listen for WebSocket messages
         if (window.webSocketManager) {
             window.webSocketManager.addEventListener('message', (data) => {
@@ -113,12 +96,18 @@ class EnhancedMessagingSystem {
             });
         }
         
-        // When driver app returns to foreground (e.g. mobile), refetch messages so new chat appears without refresh
+        // When tab is hidden: stop polling so the browser doesn't queue many ticks and freeze UI when tab becomes visible again
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) return;
+            if (document.hidden) {
+                this.stopDriverMessagePoll();
+                return;
+            }
             this.updateCurrentUser();
             if (this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id) {
-                this.loadDriverMessages(this.currentUser.id);
+                // Defer load so we don't block first paint; use debounced load to avoid stacking with poll
+                const driverId = this.currentUser.id;
+                setTimeout(() => this.loadDriverMessagesDebounced(driverId), 100);
+                setTimeout(() => this.startDriverMessagePoll(), 2500);
             }
         });
     }
@@ -152,24 +141,33 @@ class EnhancedMessagingSystem {
         }
     }
 
-    initializeDriverMessaging() {
-        console.log('🚛 Initializing driver messaging interface');
-        
-        // Clear any existing message poll (avoid duplicates)
+    stopDriverMessagePoll() {
         if (this.driverMessagePollInterval) {
             clearInterval(this.driverMessagePollInterval);
             this.driverMessagePollInterval = null;
         }
-        
-        // Load messages for driver
-        this.loadDriverMessages(this.currentUser.id);
-        
-        // Poll for new messages when driver (mobile WebSocket often suspended in background – messages appear live without refresh)
+    }
+
+    startDriverMessagePoll() {
+        if (document.hidden || !this.currentUser || this.currentUser.type !== 'driver' || !this.currentUser.id) return;
+        this.stopDriverMessagePoll();
         const pollIntervalMs = 12000; // 12 seconds
         this.driverMessagePollInterval = setInterval(() => {
             if (document.hidden || !this.currentUser || this.currentUser.type !== 'driver' || !this.currentUser.id) return;
-            this.loadDriverMessages(this.currentUser.id);
+            this.loadDriverMessagesDebounced(this.currentUser.id);
         }, pollIntervalMs);
+    }
+
+    initializeDriverMessaging() {
+        console.log('🚛 Initializing driver messaging interface');
+        
+        this.stopDriverMessagePoll();
+        
+        // Load messages for driver (debounced so visibilitychange + init don't double-run)
+        this.loadDriverMessagesDebounced(this.currentUser.id);
+        
+        // Poll only when tab is visible; when hidden we stop the poll so returning to tab doesn't fire many queued callbacks
+        this.startDriverMessagePoll();
         
         // Show messaging system
         const messagingSystem = document.getElementById('driverMessagingSystem');
@@ -229,19 +227,21 @@ class EnhancedMessagingSystem {
     handleDriverMessageInput(event) {
         const input = event.target;
         const sendBtn = document.getElementById('sendMessageBtn');
+        
+        // Enable/disable send button based on input
         if (sendBtn) {
-            sendBtn.disabled = !input.value.trim() && !this.pendingDriverImage;
+            sendBtn.disabled = input.value.trim().length === 0;
         }
+
+        // Show typing indicator to admin
         this.sendTypingIndicator('driver', this.currentUser.id);
     }
 
     sendDriverMessage() {
         const input = document.getElementById('driverMessageInput');
-        const hasText = input && input.value.trim();
-        const hasImage = this.pendingDriverImage;
-        if (!hasText && !hasImage) return;
+        if (!input || !input.value.trim()) return;
 
-        const message = (input && input.value.trim()) || '';
+        const message = input.value.trim();
         const messageData = {
             id: Date.now().toString(),
             sender: 'driver',
@@ -249,25 +249,25 @@ class EnhancedMessagingSystem {
             senderId: this.currentUser.id,
             message: message,
             timestamp: new Date().toISOString(),
-            type: hasImage ? (message ? 'image' : 'image') : 'text',
+            type: 'text',
             status: 'sent'
         };
-        if (hasImage) {
-            messageData.imageData = this.pendingDriverImage;
-            this.pendingDriverImage = null;
-            this.updateDriverSendButtonState();
-        }
 
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData);
-
-        if (input) input.value = '';
+        
+        // Clear input
+        input.value = '';
         const sendBtn = document.getElementById('sendMessageBtn');
         if (sendBtn) sendBtn.disabled = true;
 
+        // Send via WebSocket if available
         this.sendViaWebSocket(messageData);
+
+        // Play send sound
         this.playMessageSound();
-        console.log('📤 Driver message sent:', message || '(photo)');
+
+        console.log('📤 Driver message sent:', message);
     }
 
     sendQuickReply(message) {
@@ -327,7 +327,34 @@ class EnhancedMessagingSystem {
         console.log('🚨 Emergency message sent');
     }
 
+    loadDriverMessagesDebounced(driverId) {
+        if (this._loadDriverMessagesDebounceTimer) clearTimeout(this._loadDriverMessagesDebounceTimer);
+        this._loadDriverMessagesDebounceTimer = setTimeout(() => {
+            this._loadDriverMessagesDebounceTimer = null;
+            this.loadDriverMessages(driverId);
+        }, 400);
+    }
+
     async loadDriverMessages(driverId) {
+        if (this._loadDriverMessagesInProgress) {
+            this._loadDriverMessagesPendingId = driverId;
+            return;
+        }
+        const container = document.getElementById('messagesContainer');
+        if (!container) return;
+
+        this._loadDriverMessagesInProgress = true;
+        try {
+            await this._loadDriverMessagesImpl(driverId);
+        } finally {
+            this._loadDriverMessagesInProgress = false;
+            const pending = this._loadDriverMessagesPendingId;
+            this._loadDriverMessagesPendingId = null;
+            if (pending) this.loadDriverMessagesDebounced(pending);
+        }
+    }
+
+    async _loadDriverMessagesImpl(driverId) {
         const container = document.getElementById('messagesContainer');
         if (!container) return;
 
@@ -359,10 +386,20 @@ class EnhancedMessagingSystem {
         if (messages.length === 0) {
             if (welcomeMessage) container.appendChild(welcomeMessage);
         } else {
-            messages.forEach(message => {
-                this.displayDriverMessage(message, false);
-            });
-            this.scrollToBottom(container);
+            const BATCH = 40;
+            if (messages.length <= BATCH) {
+                messages.forEach(message => this.displayDriverMessage(message, false));
+                this.scrollToBottom(container);
+            } else {
+                let idx = 0;
+                const renderBatch = () => {
+                    const end = Math.min(idx + BATCH, messages.length);
+                    for (; idx < end; idx++) this.displayDriverMessage(messages[idx], false);
+                    if (idx < messages.length) requestAnimationFrame(renderBatch);
+                    else this.scrollToBottom(container);
+                };
+                requestAnimationFrame(renderBatch);
+            }
         }
 
         this.markMessagesAsRead(driverId, 'driver');
@@ -459,27 +496,32 @@ class EnhancedMessagingSystem {
     setCurrentDriverForAdmin(driverId) {
         this.currentDriverId = driverId;
         console.log('👨‍💼 Admin messaging set for driver:', driverId);
+        
+        // Load messages for this driver
         this.loadAdminMessages(driverId);
+        
+        // Update UI elements
         this.updateAdminDriverInfo(driverId);
-        this.updateAdminSendButtonState();
     }
 
     handleAdminMessageInput(event) {
         const input = event.target;
         const sendBtn = document.getElementById('adminSendBtn');
+        
+        // Enable/disable send button
         if (sendBtn) {
-            sendBtn.disabled = !this.currentDriverId || (!input.value.trim() && !this.pendingAdminImage);
+            sendBtn.disabled = input.value.trim().length === 0;
         }
+
+        // Show typing indicator to driver
         this.sendTypingIndicator('admin', this.currentDriverId);
     }
 
     sendAdminMessage() {
         const input = document.getElementById('adminMessageInput');
-        const hasText = input && input.value.trim();
-        const hasImage = this.pendingAdminImage;
-        if (!this.currentDriverId || (!hasText && !hasImage)) return;
+        if (!input || !input.value.trim() || !this.currentDriverId) return;
 
-        const message = (input && input.value.trim()) || '';
+        const message = input.value.trim();
         const messageData = {
             id: Date.now().toString(),
             sender: 'admin',
@@ -487,24 +529,25 @@ class EnhancedMessagingSystem {
             senderId: 'admin',
             message: message,
             timestamp: new Date().toISOString(),
-            type: hasImage ? 'image' : 'text',
+            type: 'text',
             status: 'sent'
         };
-        if (hasImage) {
-            messageData.imageData = this.pendingAdminImage;
-            this.pendingAdminImage = null;
-            this.updateAdminSendButtonState();
-        }
 
         this.addMessage(this.currentDriverId, messageData);
         this.displayAdminMessage(messageData);
-
-        if (input) input.value = '';
+        
+        // Clear input
+        input.value = '';
         const sendBtn = document.getElementById('adminSendBtn');
         if (sendBtn) sendBtn.disabled = true;
 
+        // Send via WebSocket
         this.sendViaWebSocket(messageData);
+
+        // Play send sound
         this.playMessageSound();
+
+        // Update statistics
         this.updateMessageStatistics();
     }
 
@@ -535,7 +578,34 @@ class EnhancedMessagingSystem {
         this.updateMessageStatistics();
     }
 
+    loadAdminMessagesDebounced(driverId) {
+        if (this._loadAdminMessagesDebounceTimer) clearTimeout(this._loadAdminMessagesDebounceTimer);
+        this._loadAdminMessagesDebounceTimer = setTimeout(() => {
+            this._loadAdminMessagesDebounceTimer = null;
+            this.loadAdminMessages(driverId);
+        }, 400);
+    }
+
     async loadAdminMessages(driverId) {
+        if (this._loadAdminMessagesInProgress) {
+            this._loadAdminMessagesPendingId = driverId;
+            return;
+        }
+        const container = document.getElementById('adminMessagesHistory');
+        if (!container) return;
+
+        this._loadAdminMessagesInProgress = true;
+        try {
+            await this._loadAdminMessagesImpl(driverId);
+        } finally {
+            this._loadAdminMessagesInProgress = false;
+            const pending = this._loadAdminMessagesPendingId;
+            this._loadAdminMessagesPendingId = null;
+            if (pending) this.loadAdminMessagesDebounced(pending);
+        }
+    }
+
+    async _loadAdminMessagesImpl(driverId) {
         const container = document.getElementById('adminMessagesHistory');
         if (!container) return;
 
@@ -572,10 +642,20 @@ class EnhancedMessagingSystem {
                 </div>
             `;
         } else {
-            messages.forEach(message => {
-                this.displayAdminMessage(message, false);
-            });
-            this.scrollToBottom(container);
+            const BATCH = 40;
+            if (messages.length <= BATCH) {
+                messages.forEach(message => this.displayAdminMessage(message, false));
+                this.scrollToBottom(container);
+            } else {
+                let idx = 0;
+                const renderBatch = () => {
+                    const end = Math.min(idx + BATCH, messages.length);
+                    for (; idx < end; idx++) this.displayAdminMessage(messages[idx], false);
+                    if (idx < messages.length) requestAnimationFrame(renderBatch);
+                    else this.scrollToBottom(container);
+                };
+                requestAnimationFrame(renderBatch);
+            }
         }
 
         this.updateMessageStatistics();
@@ -682,18 +762,10 @@ class EnhancedMessagingSystem {
 
         const isEmergency = messageData.type === 'emergency';
         const bubbleClass = isEmergency ? 'message-content emergency' : 'message-content';
-        const hasImage = messageData.imageData && typeof messageData.imageData === 'string';
-        const textContent = (messageData.message && this.formatMessageContent(messageData.message)) || '';
-        const imageHtml = hasImage
-            ? `<img src="${messageData.imageData.replace(/"/g, '&quot;')}" class="chat-message-image" alt="Photo" loading="lazy" />`
-            : '';
-        const bodyHtml = hasImage
-            ? (imageHtml + (textContent ? `<div class="chat-message-caption">${textContent}</div>` : ''))
-            : (isEmergency ? '🚨 ' : '') + textContent;
 
         messageDiv.innerHTML = `
             <div class="${bubbleClass}" ${isEmergency ? 'style="border: 2px solid #ef4444; background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);"' : ''}>
-                ${bodyHtml}
+                ${isEmergency ? '🚨 ' : ''}${this.formatMessageContent(messageData.message)}
             </div>
             <div class="message-time">
                 ${this.formatTime(messageData.timestamp)}
@@ -713,74 +785,6 @@ class EnhancedMessagingSystem {
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>');
-    }
-
-    resizeImageFile(file, maxWidth = 800, quality = 0.85) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const url = URL.createObjectURL(file);
-            img.onload = () => {
-                URL.revokeObjectURL(url);
-                let { width, height } = img;
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width;
-                    width = maxWidth;
-                }
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) { reject(new Error('Canvas not supported')); return; }
-                ctx.drawImage(img, 0, 0, width, height);
-                try {
-                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    resolve(dataUrl);
-                } catch (e) {
-                    reject(e);
-                }
-            };
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                reject(new Error('Image load failed'));
-            };
-            img.src = url;
-        });
-    }
-
-    async processAndSetDriverImage(file) {
-        try {
-            const dataUrl = await this.resizeImageFile(file);
-            this.pendingDriverImage = dataUrl;
-            this.updateDriverSendButtonState();
-            if (window.app) window.app.showAlert('Photo attached', 'You can add a caption and send.', 'info', 2000);
-        } catch (e) {
-            console.warn('Image process failed:', e);
-            if (window.app) window.app.showAlert('Could not add photo', e.message || 'Please try another image.', 'error');
-        }
-    }
-
-    async processAndSetAdminImage(file) {
-        try {
-            const dataUrl = await this.resizeImageFile(file);
-            this.pendingAdminImage = dataUrl;
-            this.updateAdminSendButtonState();
-            if (window.app) window.app.showAlert('Photo attached', 'Add a caption (optional) and send.', 'info', 2000);
-        } catch (e) {
-            console.warn('Image process failed:', e);
-            if (window.app) window.app.showAlert('Could not add photo', e.message || 'Please try another image.', 'error');
-        }
-    }
-
-    updateDriverSendButtonState() {
-        const input = document.getElementById('driverMessageInput');
-        const sendBtn = document.getElementById('sendMessageBtn');
-        if (sendBtn) sendBtn.disabled = !(input && input.value.trim()) && !this.pendingDriverImage;
-    }
-
-    updateAdminSendButtonState() {
-        const input = document.getElementById('adminMessageInput');
-        const sendBtn = document.getElementById('adminSendBtn');
-        if (sendBtn) sendBtn.disabled = !this.currentDriverId || (!(input && input.value.trim()) && !this.pendingAdminImage);
     }
 
     formatTime(timestamp) {
@@ -1045,9 +1049,8 @@ class EnhancedMessagingSystem {
     showBrowserNotification(messageData) {
         if ('Notification' in window && Notification.permission === 'granted') {
             const title = `New message from ${messageData.senderName}`;
-            const bodyText = (messageData.message || (messageData.imageData ? '📷 Photo' : '')).substring(0, 100);
             const options = {
-                body: bodyText,
+                body: messageData.message.substring(0, 100),
                 icon: '/favicon.ico',
                 tag: `message-${messageData.senderId}`,
                 requireInteraction: messageData.type === 'emergency'
@@ -1079,15 +1082,21 @@ class EnhancedMessagingSystem {
     }
 
     handleStorageUpdate(newValue) {
+        if (this._handleStorageUpdateTimer) clearTimeout(this._handleStorageUpdateTimer);
+        this._handleStorageUpdateTimer = setTimeout(() => {
+            this._handleStorageUpdateTimer = null;
+            this._handleStorageUpdateImpl(newValue);
+        }, 300);
+    }
+
+    _handleStorageUpdateImpl(newValue) {
         try {
             const updatedMessages = JSON.parse(newValue || '{}');
             this.messages = updatedMessages;
-            
-            // Refresh current view
             if (this.currentUser?.type === 'driver') {
-                this.loadDriverMessages(this.currentUser.id);
+                this.loadDriverMessagesDebounced(this.currentUser.id);
             } else if (this.currentDriverId) {
-                this.loadAdminMessages(this.currentDriverId);
+                this.loadAdminMessagesDebounced(this.currentDriverId);
             }
         } catch (error) {
             console.error('Error handling storage update:', error);
@@ -1153,8 +1162,10 @@ function showEmojiPicker() {
 }
 
 function attachImage() {
-    const input = document.getElementById('driverPhotoInput');
-    if (input) input.click();
+    // Placeholder for image attachment
+    if (window.app) {
+        window.app.showAlert('Feature Coming Soon', 'Image attachment will be available in the next update.', 'info');
+    }
 }
 
 function shareLocation() {
@@ -1183,8 +1194,10 @@ function sendAdminQuickMessage(message) {
 }
 
 function attachFileToMessage() {
-    const input = document.getElementById('adminPhotoInput');
-    if (input) input.click();
+    // Placeholder for file attachment
+    if (window.app) {
+        window.app.showAlert('Feature Coming Soon', 'File attachment will be available in the next update.', 'info');
+    }
 }
 
 function sendLocationToDriver() {

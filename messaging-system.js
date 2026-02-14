@@ -302,8 +302,9 @@ class MessagingSystem {
             }
         });
 
-        // Check for new messages periodically
+        // Check for new messages periodically (skip when tab hidden to avoid queued callbacks when tab returns)
         setInterval(() => {
+            if (document.hidden) return;
             this.checkForNewMessages();
         }, 10000);
     }
