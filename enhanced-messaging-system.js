@@ -154,6 +154,8 @@ class EnhancedMessagingSystem {
         const pollIntervalMs = 12000; // 12 seconds
         this.driverMessagePollInterval = setInterval(() => {
             if (document.hidden || !this.currentUser || this.currentUser.type !== 'driver' || !this.currentUser.id) return;
+            const content = document.getElementById('messagingContent');
+            if (content && !content.classList.contains('collapsed')) return;
             this.loadDriverMessagesDebounced(this.currentUser.id);
         }, pollIntervalMs);
     }
@@ -360,8 +362,13 @@ class EnhancedMessagingSystem {
 
         // World-class: always fetch full history from server so driver sees messages sent while offline
         const baseUrl = (typeof syncManager !== 'undefined' && syncManager.baseUrl) ? syncManager.baseUrl.replace(/\/$/, '') : '';
+        const fetchTimeoutMs = 12000;
+        let res;
         try {
-            const res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages`);
+            const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), fetchTimeoutMs) : null;
+            res = await fetch(`${baseUrl}/api/driver/${encodeURIComponent(driverId)}/messages`, { signal: ctrl ? ctrl.signal : undefined });
+            if (timeoutId) clearTimeout(timeoutId);
             if (res.ok) {
                 const data = await res.json();
                 const serverMessages = Array.isArray(data.messages) ? data.messages : [];
@@ -386,7 +393,7 @@ class EnhancedMessagingSystem {
         if (messages.length === 0) {
             if (welcomeMessage) container.appendChild(welcomeMessage);
         } else {
-            const BATCH = 40;
+            const BATCH = 25;
             if (messages.length <= BATCH) {
                 messages.forEach(message => this.displayDriverMessage(message, false));
                 this.scrollToBottom(container);
@@ -943,31 +950,32 @@ class EnhancedMessagingSystem {
         }
         this.addMessage(driverId, messageData);
 
-        if (this.currentUser.type === 'driver' && messageData.sender === 'admin') {
-            this.displayDriverMessage(messageData);
-            setTimeout(() => {
+        // Defer all DOM updates to next tick so WebSocket handler returns immediately and main thread does not block
+        const self = this;
+        setTimeout(function applyChatMessageToDOM() {
+            if (self.currentUser.type === 'driver' && messageData.sender === 'admin') {
+                self.displayDriverMessage(messageData);
                 const messagingSystem = document.getElementById('driverMessagingSystem');
                 if (messagingSystem && messagingSystem.style.display === 'none') messagingSystem.style.display = 'block';
-            }, 100);
-        } else if (messageData.sender === 'admin' && this.currentUser.type === 'driver') {
-            this.displayDriverMessage(messageData);
-            const ms = document.getElementById('driverMessagingSystem');
-            if (ms && ms.style.display === 'none') ms.style.display = 'block';
-        } else if (messageData.sender === 'driver' && messageData.targetDriverId === this.currentUser.id) {
-            this.displayDriverMessage(messageData);
-            const ms = document.getElementById('driverMessagingSystem');
-            if (ms && ms.style.display === 'none') ms.style.display = 'block';
-        } else if (messageData.sender === 'driver' && this.currentUser.type !== 'driver') {
-            const driverDetailsModal = document.getElementById('driverDetailsModal');
-            const isDriverDetailsOpen = driverDetailsModal && driverDetailsModal.style.display !== 'none';
-            if (!this.currentDriverId || this.currentDriverId === driverId || isDriverDetailsOpen) {
-                this.displayAdminMessage(messageData);
-                if (!this.currentDriverId) this.setCurrentDriverForAdmin(driverId);
+            } else if (messageData.sender === 'admin' && self.currentUser.type === 'driver') {
+                self.displayDriverMessage(messageData);
+                const ms = document.getElementById('driverMessagingSystem');
+                if (ms && ms.style.display === 'none') ms.style.display = 'block';
+            } else if (messageData.sender === 'driver' && messageData.targetDriverId === self.currentUser.id) {
+                self.displayDriverMessage(messageData);
+                const ms = document.getElementById('driverMessagingSystem');
+                if (ms && ms.style.display === 'none') ms.style.display = 'block';
+            } else if (messageData.sender === 'driver' && self.currentUser.type !== 'driver') {
+                const driverDetailsModal = document.getElementById('driverDetailsModal');
+                const isDriverDetailsOpen = driverDetailsModal && driverDetailsModal.style.display !== 'none';
+                if (!self.currentDriverId || self.currentDriverId === driverId || isDriverDetailsOpen) {
+                    self.displayAdminMessage(messageData);
+                    if (!self.currentDriverId) self.setCurrentDriverForAdmin(driverId);
+                }
             }
-        }
-
-        this.playNotificationSound();
-        if (document.hidden && messageData.type !== 'quick_reply') this.showBrowserNotification(messageData);
+            self.playNotificationSound();
+            if (document.hidden && messageData.type !== 'quick_reply') self.showBrowserNotification(messageData);
+        }, 0);
     }
 
     sendTypingIndicator(senderType, targetId) {

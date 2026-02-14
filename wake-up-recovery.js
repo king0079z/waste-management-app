@@ -99,10 +99,15 @@ class WakeUpRecoverySystem {
         const now = Date.now();
         const timeSinceLastCheck = now - this.lastActiveTime;
         const cooldownOk = (now - this.lastRecoveryTime) >= this.recoveryCooldownMs;
+        const wasRecentlyHidden = this.lastHiddenTime > 0 && (now - this.lastHiddenTime) < 120000;
 
-        if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering && cooldownOk) {
+        if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering && cooldownOk && wasRecentlyHidden) {
             console.log(`🚨 Wake-up detected! Time gap: ${Math.round(timeSinceLastCheck / 1000)}s`);
             this.performRecovery('wake_from_sleep');
+        } else if (timeSinceLastCheck > this.freezeThreshold && !wasRecentlyHidden) {
+            // Main thread was busy (e.g. chat) but tab was not hidden – do not run recovery to avoid "Reconnecting..." stuck
+            this.lastActiveTime = now;
+            return;
         }
 
         this.lastActiveTime = now;
@@ -183,8 +188,18 @@ class WakeUpRecoverySystem {
 
         this.sendHealthReportToServer('wake_up_recovery_started', { reason });
 
+        const recoveryMaxMs = 25000;
         try {
             this.showRecoveryNotification();
+            const self = this;
+            self._recoveryFailSafeTimer = setTimeout(function() {
+                if (self.isRecovering) {
+                    self.isRecovering = false;
+                    self.lastActiveTime = Date.now();
+                    const notification = document.getElementById('wake-recovery-notification');
+                    if (notification) notification.remove();
+                }
+            }, recoveryMaxMs);
 
             const step = (fn) => Promise.race([
                 Promise.resolve(fn()),
@@ -218,6 +233,8 @@ class WakeUpRecoverySystem {
             this.showErrorNotification(error);
             this.sendHealthReportToServer('wake_up_recovery_failed', { error: error && error.message });
         } finally {
+            if (this._recoveryFailSafeTimer) clearTimeout(this._recoveryFailSafeTimer);
+            this._recoveryFailSafeTimer = null;
             this.isRecovering = false;
             this.lastActiveTime = Date.now();
         }
