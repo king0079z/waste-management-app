@@ -2121,6 +2121,105 @@
                     </button>
                 </div>
             </section>
+
+            <!-- Operations at a glance - World-class visibility -->
+            <section class="dashboard-ops-strip" aria-labelledby="opsStripHeading">
+                <h2 id="opsStripHeading" class="dashboard-section-heading visually-hidden">Operations at a glance</h2>
+                <div class="ops-strip-grid">
+                    <div class="ops-strip-item">
+                        <span class="ops-strip-value" id="dashboardTotalBins">0</span>
+                        <span class="ops-strip-label">Total Bins</span>
+                    </div>
+                    <div class="ops-strip-item ops-strip-critical">
+                        <span class="ops-strip-value" id="dashboardCriticalBins">0</span>
+                        <span class="ops-strip-label">Critical Bins</span>
+                        <a href="#" class="ops-strip-link" id="dashboardGoMonitoring" data-section="monitoring">View map</a>
+                    </div>
+                    <div class="ops-strip-item ops-strip-warning">
+                        <span class="ops-strip-value" id="dashboardWarningBins">0</span>
+                        <span class="ops-strip-label">Warning</span>
+                    </div>
+                    <div class="ops-strip-item ops-strip-drivers">
+                        <span class="ops-strip-value" id="dashboardActiveDrivers">0</span>
+                        <span class="ops-strip-label">Active Drivers</span>
+                        <a href="#" class="ops-strip-link" id="dashboardGoFleet" data-section="fleet">Fleet</a>
+                    </div>
+                    <div class="ops-strip-item">
+                        <span class="ops-strip-value" id="dashboardPendingRoutes">0</span>
+                        <span class="ops-strip-label">Pending Routes</span>
+                    </div>
+                    <div class="ops-strip-item ops-strip-alerts">
+                        <span class="ops-strip-value" id="dashboardActiveAlerts">0</span>
+                        <span class="ops-strip-label">Active Alerts</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Two-column: Live activity + Critical items -->
+            <div class="dashboard-two-col">
+                <section class="glass-card dashboard-activity-card" aria-labelledby="activityHeading">
+                    <div class="dashboard-card-head">
+                        <h3 id="activityHeading" class="dashboard-section-heading"><i class="fas fa-stream" aria-hidden="true"></i> Live Activity</h3>
+                    </div>
+                    <div class="dashboard-activity-feed" id="dashboardActivityFeed" role="log" aria-live="polite">
+                        <div class="activity-feed-placeholder" id="dashboardActivityPlaceholder">Loading activity…</div>
+                    </div>
+                </section>
+                <section class="glass-card dashboard-critical-card" aria-labelledby="criticalHeading">
+                    <div class="dashboard-card-head">
+                        <h3 id="criticalHeading" class="dashboard-section-heading"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> Critical & Alerts</h3>
+                        <a href="#" class="dashboard-card-link" id="dashboardGoMonitoring2" data-section="monitoring">Live map</a>
+                    </div>
+                    <div class="dashboard-critical-bins" id="dashboardCriticalBinsList">
+                        <div class="critical-placeholder" id="dashboardCriticalPlaceholder">No critical bins</div>
+                    </div>
+                    <div class="dashboard-critical-alerts" id="dashboardCriticalAlertsList">
+                        <div class="critical-placeholder" id="dashboardAlertsPlaceholder">No active alerts</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Recent complaints -->
+            <section class="glass-card dashboard-complaints-card" aria-labelledby="complaintsHeading">
+                <div class="dashboard-card-head">
+                    <h3 id="complaintsHeading" class="dashboard-section-heading"><i class="fas fa-comments" aria-hidden="true"></i> Recent Complaints</h3>
+                    <a href="#" class="dashboard-card-link" id="dashboardGoComplaints" data-section="complaints">View all</a>
+                </div>
+                <div class="dashboard-complaints-list" id="dashboardComplaintsList">
+                    <div class="complaints-placeholder" id="dashboardComplaintsPlaceholder">No recent complaints</div>
+                </div>
+            </section>
+
+            <!-- Command center shortcuts -->
+            <section class="dashboard-shortcuts" aria-labelledby="shortcutsHeading">
+                <h2 id="shortcutsHeading" class="dashboard-section-heading">Command Center</h2>
+                <div class="dashboard-shortcuts-grid" id="dashboardShortcutsGrid">
+                    <a href="#" class="dashboard-shortcut-card" data-section="monitoring">
+                        <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+                        <span>Live Map</span>
+                    </a>
+                    <a href="#" class="dashboard-shortcut-card" data-section="fleet">
+                        <i class="fas fa-truck" aria-hidden="true"></i>
+                        <span>Fleet</span>
+                    </a>
+                    <a href="#" class="dashboard-shortcut-card" data-section="complaints">
+                        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                        <span>Complaints</span>
+                    </a>
+                    <a href="#" class="dashboard-shortcut-card" data-section="analytics">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <a href="#" class="dashboard-shortcut-card" data-section="ai-dashboard">
+                        <i class="fas fa-brain" aria-hidden="true"></i>
+                        <span>AI/ML</span>
+                    </a>
+                    <a href="#" class="dashboard-shortcut-card dashboard-shortcut-admin" data-section="admin" id="dashboardShortcutAdmin" style="display: none;">
+                        <i class="fas fa-user-shield" aria-hidden="true"></i>
+                        <span>Admin</span>
+                    </a>
+                </div>
+            </section>
         </div>
 
         <!-- Live Monitoring Section - World-class single header, no duplication -->

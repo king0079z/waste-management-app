@@ -390,6 +390,18 @@ function setupEventHandlers() {
         });
     }
 
+    // City Dashboard: all [data-section] links navigate to that section
+    const dashboardEl = document.getElementById('dashboard');
+    if (dashboardEl) {
+        dashboardEl.addEventListener('click', function(e) {
+            const link = e.target.closest('[data-section]');
+            if (link && window.app && typeof window.app.showSection === 'function') {
+                e.preventDefault();
+                window.app.showSection(link.getAttribute('data-section'));
+            }
+        });
+    }
+
     const reportBtn = document.getElementById('generateReportBtn');
     if (reportBtn) {
         reportBtn.addEventListener('click', function() {

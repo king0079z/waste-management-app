@@ -2554,6 +2554,111 @@ class WasteManagementApp {
             lastUpdatedEl.textContent = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             lastUpdatedEl.setAttribute('datetime', new Date().toISOString());
         }
+
+        // Operations widgets: strip, activity feed, critical bins/alerts, recent complaints
+        this.updateDashboardOperationsWidgets(stats, bins);
+    }
+
+    updateDashboardOperationsWidgets(stats, bins) {
+        if (!stats) stats = typeof dataManager !== 'undefined' ? dataManager.getSystemStats() : {};
+        if (!bins && typeof dataManager !== 'undefined') bins = dataManager.getBins();
+
+        const totalBins = (bins || []).length;
+        const criticalBins = (bins || []).filter(b => (b.fill >= 85) || (b.status === 'critical' || b.status === 'fire-risk'));
+        const warningBins = (bins || []).filter(b => (b.fill >= 70 && b.fill < 85) || b.status === 'warning');
+        const routes = typeof dataManager !== 'undefined' ? dataManager.getRoutes() : [];
+        const pendingRoutes = routes.filter(r => r.status === 'pending' || r.status === 'in-progress');
+        const alerts = typeof dataManager !== 'undefined' ? dataManager.getActiveAlerts() : [];
+        const complaints = typeof dataManager !== 'undefined' ? dataManager.getActiveComplaints() : [];
+        const allComplaints = typeof dataManager !== 'undefined' ? dataManager.getComplaints() : [];
+        const recentComplaints = [...allComplaints].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 5);
+        const logs = typeof dataManager !== 'undefined' ? dataManager.getSystemLogs() : [];
+        const recentLogs = [...logs].slice(-12).reverse();
+
+        // Operations strip numbers
+        const setEl = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        setEl('dashboardTotalBins', totalBins);
+        setEl('dashboardCriticalBins', criticalBins.length);
+        setEl('dashboardWarningBins', warningBins.length);
+        setEl('dashboardActiveDrivers', stats.activeDrivers || 0);
+        setEl('dashboardPendingRoutes', pendingRoutes.length);
+        setEl('dashboardActiveAlerts', alerts.length);
+
+        // Activity feed
+        const feedEl = document.getElementById('dashboardActivityFeed');
+        const feedPlaceholder = document.getElementById('dashboardActivityPlaceholder');
+        if (feedEl && feedPlaceholder) {
+            feedEl.querySelectorAll('.activity-feed-item').forEach(n => n.remove());
+            if (recentLogs.length === 0) {
+                feedPlaceholder.style.display = 'block';
+                feedPlaceholder.textContent = 'No recent activity';
+            } else {
+                feedPlaceholder.style.display = 'none';
+                recentLogs.forEach(log => {
+                    const item = document.createElement('div');
+                    item.className = 'activity-feed-item activity-feed-' + (log.type || 'info');
+                    const time = log.timestamp ? new Date(log.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+                    item.innerHTML = '<span class="activity-feed-time">' + time + '</span> <span class="activity-feed-msg">' + (log.message || '').replace(/</g, '&lt;') + '</span>';
+                    feedEl.appendChild(item);
+                });
+            }
+        }
+
+        // Critical bins list
+        const critListEl = document.getElementById('dashboardCriticalBinsList');
+        const critPlaceholder = document.getElementById('dashboardCriticalPlaceholder');
+        if (critListEl && critPlaceholder) {
+            critPlaceholder.style.display = criticalBins.length ? 'none' : 'block';
+            critListEl.querySelectorAll('.critical-bin-row').forEach(n => n.remove());
+            criticalBins.slice(0, 5).forEach(bin => {
+                const row = document.createElement('div');
+                row.className = 'critical-bin-row';
+                row.innerHTML = '<span class="critical-bin-id">' + (bin.id || '').replace(/</g, '&lt;') + '</span> <span class="critical-bin-fill">' + (bin.fill || 0) + '%</span>';
+                critListEl.appendChild(row);
+            });
+        }
+
+        // Active alerts list
+        const alertsListEl = document.getElementById('dashboardCriticalAlertsList');
+        const alertsPlaceholder = document.getElementById('dashboardAlertsPlaceholder');
+        if (alertsListEl && alertsPlaceholder) {
+            alertsPlaceholder.style.display = alerts.length ? 'none' : 'block';
+            alertsListEl.querySelectorAll('.critical-alert-row').forEach(n => n.remove());
+            alerts.slice(0, 5).forEach(alert => {
+                const row = document.createElement('div');
+                row.className = 'critical-alert-row critical-alert-' + (alert.priority || 'medium');
+                const time = alert.timestamp ? new Date(alert.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+                row.innerHTML = '<span class="critical-alert-msg">' + (alert.message || '').replace(/</g, '&lt;') + '</span> <span class="critical-alert-time">' + time + '</span>';
+                alertsListEl.appendChild(row);
+            });
+        }
+
+        // Recent complaints list
+        const compListEl = document.getElementById('dashboardComplaintsList');
+        const compPlaceholder = document.getElementById('dashboardComplaintsPlaceholder');
+        if (compListEl && compPlaceholder) {
+            compPlaceholder.style.display = recentComplaints.length ? 'none' : 'block';
+            compListEl.querySelectorAll('.complaint-row').forEach(n => n.remove());
+            recentComplaints.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'complaint-row';
+                const loc = (c.location || c.area || '—').replace(/</g, '&lt;');
+                const type = (c.type || 'complaint').replace(/</g, '&lt;');
+                const status = c.status || 'open';
+                const statusClass = status === 'resolved' ? 'complaint-status resolved' : 'complaint-status';
+                const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                row.innerHTML = '<span class="complaint-loc">' + loc + '</span> <span class="complaint-type">' + type + '</span> <span class="' + statusClass + '">' + status + '</span> <span class="complaint-date">' + date + '</span>';
+                compListEl.appendChild(row);
+            });
+        }
+
+        // Admin shortcut: show only for admin
+        const adminShortcut = document.getElementById('dashboardShortcutAdmin');
+        if (adminShortcut) {
+            const user = window.authManager && window.authManager.getCurrentUser && window.authManager.getCurrentUser();
+            const isAdmin = user && user.type === 'admin';
+            adminShortcut.style.display = isAdmin ? '' : 'none';
+        }
     }
 
     // Helper methods for driver routes
