@@ -11,7 +11,9 @@ class EnhancedMessagingSystem {
         this.messageSound = null;
         this.isMessagingExpanded = true;
         this.driverMessagePollInterval = null; // Poll for new messages when driver (mobile WebSocket can be suspended)
-        
+        this.pendingDriverImage = null;
+        this.pendingAdminImage = null;
+
         this.init();
     }
 
@@ -80,6 +82,29 @@ class EnhancedMessagingSystem {
                 this.handleStorageUpdate(e.newValue);
             }
         });
+
+        // Driver photo input
+        const driverPhotoInput = document.getElementById('driverPhotoInput');
+        if (driverPhotoInput) {
+            driverPhotoInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    this.processAndSetDriverImage(file);
+                }
+                e.target.value = '';
+            });
+        }
+        // Admin photo input
+        const adminPhotoInput = document.getElementById('adminPhotoInput');
+        if (adminPhotoInput) {
+            adminPhotoInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    this.processAndSetAdminImage(file);
+                }
+                e.target.value = '';
+            });
+        }
 
         // Listen for WebSocket messages
         if (window.webSocketManager) {
@@ -204,21 +229,19 @@ class EnhancedMessagingSystem {
     handleDriverMessageInput(event) {
         const input = event.target;
         const sendBtn = document.getElementById('sendMessageBtn');
-        
-        // Enable/disable send button based on input
         if (sendBtn) {
-            sendBtn.disabled = input.value.trim().length === 0;
+            sendBtn.disabled = !input.value.trim() && !this.pendingDriverImage;
         }
-
-        // Show typing indicator to admin
         this.sendTypingIndicator('driver', this.currentUser.id);
     }
 
     sendDriverMessage() {
         const input = document.getElementById('driverMessageInput');
-        if (!input || !input.value.trim()) return;
+        const hasText = input && input.value.trim();
+        const hasImage = this.pendingDriverImage;
+        if (!hasText && !hasImage) return;
 
-        const message = input.value.trim();
+        const message = (input && input.value.trim()) || '';
         const messageData = {
             id: Date.now().toString(),
             sender: 'driver',
@@ -226,25 +249,25 @@ class EnhancedMessagingSystem {
             senderId: this.currentUser.id,
             message: message,
             timestamp: new Date().toISOString(),
-            type: 'text',
+            type: hasImage ? (message ? 'image' : 'image') : 'text',
             status: 'sent'
         };
+        if (hasImage) {
+            messageData.imageData = this.pendingDriverImage;
+            this.pendingDriverImage = null;
+            this.updateDriverSendButtonState();
+        }
 
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData);
-        
-        // Clear input
-        input.value = '';
+
+        if (input) input.value = '';
         const sendBtn = document.getElementById('sendMessageBtn');
         if (sendBtn) sendBtn.disabled = true;
 
-        // Send via WebSocket if available
         this.sendViaWebSocket(messageData);
-
-        // Play send sound
         this.playMessageSound();
-
-        console.log('📤 Driver message sent:', message);
+        console.log('📤 Driver message sent:', message || '(photo)');
     }
 
     sendQuickReply(message) {
@@ -436,32 +459,27 @@ class EnhancedMessagingSystem {
     setCurrentDriverForAdmin(driverId) {
         this.currentDriverId = driverId;
         console.log('👨‍💼 Admin messaging set for driver:', driverId);
-        
-        // Load messages for this driver
         this.loadAdminMessages(driverId);
-        
-        // Update UI elements
         this.updateAdminDriverInfo(driverId);
+        this.updateAdminSendButtonState();
     }
 
     handleAdminMessageInput(event) {
         const input = event.target;
         const sendBtn = document.getElementById('adminSendBtn');
-        
-        // Enable/disable send button
         if (sendBtn) {
-            sendBtn.disabled = input.value.trim().length === 0;
+            sendBtn.disabled = !this.currentDriverId || (!input.value.trim() && !this.pendingAdminImage);
         }
-
-        // Show typing indicator to driver
         this.sendTypingIndicator('admin', this.currentDriverId);
     }
 
     sendAdminMessage() {
         const input = document.getElementById('adminMessageInput');
-        if (!input || !input.value.trim() || !this.currentDriverId) return;
+        const hasText = input && input.value.trim();
+        const hasImage = this.pendingAdminImage;
+        if (!this.currentDriverId || (!hasText && !hasImage)) return;
 
-        const message = input.value.trim();
+        const message = (input && input.value.trim()) || '';
         const messageData = {
             id: Date.now().toString(),
             sender: 'admin',
@@ -469,25 +487,24 @@ class EnhancedMessagingSystem {
             senderId: 'admin',
             message: message,
             timestamp: new Date().toISOString(),
-            type: 'text',
+            type: hasImage ? 'image' : 'text',
             status: 'sent'
         };
+        if (hasImage) {
+            messageData.imageData = this.pendingAdminImage;
+            this.pendingAdminImage = null;
+            this.updateAdminSendButtonState();
+        }
 
         this.addMessage(this.currentDriverId, messageData);
         this.displayAdminMessage(messageData);
-        
-        // Clear input
-        input.value = '';
+
+        if (input) input.value = '';
         const sendBtn = document.getElementById('adminSendBtn');
         if (sendBtn) sendBtn.disabled = true;
 
-        // Send via WebSocket
         this.sendViaWebSocket(messageData);
-
-        // Play send sound
         this.playMessageSound();
-
-        // Update statistics
         this.updateMessageStatistics();
     }
 
@@ -665,10 +682,18 @@ class EnhancedMessagingSystem {
 
         const isEmergency = messageData.type === 'emergency';
         const bubbleClass = isEmergency ? 'message-content emergency' : 'message-content';
+        const hasImage = messageData.imageData && typeof messageData.imageData === 'string';
+        const textContent = (messageData.message && this.formatMessageContent(messageData.message)) || '';
+        const imageHtml = hasImage
+            ? `<img src="${messageData.imageData.replace(/"/g, '&quot;')}" class="chat-message-image" alt="Photo" loading="lazy" />`
+            : '';
+        const bodyHtml = hasImage
+            ? (imageHtml + (textContent ? `<div class="chat-message-caption">${textContent}</div>` : ''))
+            : (isEmergency ? '🚨 ' : '') + textContent;
 
         messageDiv.innerHTML = `
             <div class="${bubbleClass}" ${isEmergency ? 'style="border: 2px solid #ef4444; background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);"' : ''}>
-                ${isEmergency ? '🚨 ' : ''}${this.formatMessageContent(messageData.message)}
+                ${bodyHtml}
             </div>
             <div class="message-time">
                 ${this.formatTime(messageData.timestamp)}
@@ -688,6 +713,74 @@ class EnhancedMessagingSystem {
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>');
+    }
+
+    resizeImageFile(file, maxWidth = 800, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { reject(new Error('Canvas not supported')); return; }
+                ctx.drawImage(img, 0, 0, width, height);
+                try {
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(dataUrl);
+                } catch (e) {
+                    reject(e);
+                }
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Image load failed'));
+            };
+            img.src = url;
+        });
+    }
+
+    async processAndSetDriverImage(file) {
+        try {
+            const dataUrl = await this.resizeImageFile(file);
+            this.pendingDriverImage = dataUrl;
+            this.updateDriverSendButtonState();
+            if (window.app) window.app.showAlert('Photo attached', 'You can add a caption and send.', 'info', 2000);
+        } catch (e) {
+            console.warn('Image process failed:', e);
+            if (window.app) window.app.showAlert('Could not add photo', e.message || 'Please try another image.', 'error');
+        }
+    }
+
+    async processAndSetAdminImage(file) {
+        try {
+            const dataUrl = await this.resizeImageFile(file);
+            this.pendingAdminImage = dataUrl;
+            this.updateAdminSendButtonState();
+            if (window.app) window.app.showAlert('Photo attached', 'Add a caption (optional) and send.', 'info', 2000);
+        } catch (e) {
+            console.warn('Image process failed:', e);
+            if (window.app) window.app.showAlert('Could not add photo', e.message || 'Please try another image.', 'error');
+        }
+    }
+
+    updateDriverSendButtonState() {
+        const input = document.getElementById('driverMessageInput');
+        const sendBtn = document.getElementById('sendMessageBtn');
+        if (sendBtn) sendBtn.disabled = !(input && input.value.trim()) && !this.pendingDriverImage;
+    }
+
+    updateAdminSendButtonState() {
+        const input = document.getElementById('adminMessageInput');
+        const sendBtn = document.getElementById('adminSendBtn');
+        if (sendBtn) sendBtn.disabled = !this.currentDriverId || (!(input && input.value.trim()) && !this.pendingAdminImage);
     }
 
     formatTime(timestamp) {
@@ -952,8 +1045,9 @@ class EnhancedMessagingSystem {
     showBrowserNotification(messageData) {
         if ('Notification' in window && Notification.permission === 'granted') {
             const title = `New message from ${messageData.senderName}`;
+            const bodyText = (messageData.message || (messageData.imageData ? '📷 Photo' : '')).substring(0, 100);
             const options = {
-                body: messageData.message.substring(0, 100),
+                body: bodyText,
                 icon: '/favicon.ico',
                 tag: `message-${messageData.senderId}`,
                 requireInteraction: messageData.type === 'emergency'
@@ -1059,10 +1153,8 @@ function showEmojiPicker() {
 }
 
 function attachImage() {
-    // Placeholder for image attachment
-    if (window.app) {
-        window.app.showAlert('Feature Coming Soon', 'Image attachment will be available in the next update.', 'info');
-    }
+    const input = document.getElementById('driverPhotoInput');
+    if (input) input.click();
 }
 
 function shareLocation() {
@@ -1091,10 +1183,8 @@ function sendAdminQuickMessage(message) {
 }
 
 function attachFileToMessage() {
-    // Placeholder for file attachment
-    if (window.app) {
-        window.app.showAlert('Feature Coming Soon', 'File attachment will be available in the next update.', 'info');
-    }
+    const input = document.getElementById('adminPhotoInput');
+    if (input) input.click();
 }
 
 function sendLocationToDriver() {
