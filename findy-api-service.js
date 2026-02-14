@@ -1,10 +1,10 @@
 // findy-api-service.js - Findy IoT API Integration Service
 // Updated to match the correct UAC API structure from Postman collection
 //
-// SENSOR DATA CADENCE: Sensors send bin data to the Findy platform every 30 minutes.
-// Bin fill levels and other sensor readings from Findy are therefore updated at most
-// every 30 min; the app should not assume real-time sub-30-min updates from Findy.
-const FINDY_SENSOR_PUSH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+// SENSOR DATA CADENCE: Sensors send bin data to the Findy platform at a configurable interval
+// (default 30 minutes). Admins can change this in Admin Panel → Sensor Fill Data Interval.
+// Bin fill levels from Findy are updated at most every [interval] min.
+const FINDY_SENSOR_PUSH_INTERVAL_MS = 30 * 60 * 1000; // default 30 minutes (admin can change via /api/settings)
 
 class FindyAPIService {
     constructor() {

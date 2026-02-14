@@ -279,8 +279,8 @@ function broadcastSensorUpdate(imei, sensorData) {
 }
 
 // Sensor polling service configuration
-// Note: Sensors send data to Findy every 30 min; polling more often returns whatever Findy has.
-const SENSOR_POLL_INTERVAL = 60000; // 60 seconds (server polls Findy; sensor pushes to Findy every 30 min)
+// Note: Sensor fill data cadence is configurable (Admin → Sensor Fill Data Interval; default 30 min).
+const SENSOR_POLL_INTERVAL = 60000; // 60 seconds (server polls Findy; sensors push at admin-configured interval)
 let sensorPollingActive = false;
 
 // Start sensor polling service
@@ -1099,6 +1099,53 @@ app.get('/api/health/mongodb', async (req, res) => {
             error: error.message,
             timestamp: new Date().toISOString()
         });
+    }
+});
+
+// Get app settings (e.g. sensor reporting interval) – admin can adjust
+app.get('/api/settings', async (req, res) => {
+    try {
+        const data = await dbManager.getAllData();
+        const settings = data.settings || {};
+        const sensorReportingIntervalMinutes = Math.max(5, Math.min(120, Number(settings.sensorReportingIntervalMinutes) || 30));
+        res.json({
+            success: true,
+            settings: {
+                sensorReportingIntervalMinutes
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Get settings error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            settings: { sensorReportingIntervalMinutes: 30 }
+        });
+    }
+});
+
+// Update app settings (admin only in production – protect with auth if needed)
+app.put('/api/settings', async (req, res) => {
+    try {
+        const data = await dbManager.getAllData();
+        const current = data.settings || {};
+        const incoming = req.body || {};
+        let sensorReportingIntervalMinutes = Number(incoming.sensorReportingIntervalMinutes);
+        if (Number.isNaN(sensorReportingIntervalMinutes) || sensorReportingIntervalMinutes < 5 || sensorReportingIntervalMinutes > 120) {
+            sensorReportingIntervalMinutes = current.sensorReportingIntervalMinutes != null ? current.sensorReportingIntervalMinutes : 30;
+        }
+        const merged = { ...current, sensorReportingIntervalMinutes };
+        await dbManager.setData('settings', merged);
+        console.log('📋 Settings updated: sensorReportingIntervalMinutes =', sensorReportingIntervalMinutes);
+        res.json({
+            success: true,
+            settings: { sensorReportingIntervalMinutes },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Put settings error:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

@@ -702,10 +702,11 @@ class WebSocketManager {
         Object.keys(data.data).forEach(key => {
             if (data.data[key] !== undefined) {
                 // CRITICAL: Protect recently collected bins from server/Findy overwrites.
-                // Sensors send to Findy every 30 min – use 35 min so one Findy cycle can't overwrite driver-collected state.
+                // Sensor reporting interval is admin-configurable (default 30 min); protection = interval + 5 min.
                 if (key === 'bins' && Array.isArray(data.data[key]) && window._recentlyCollectedBins) {
                     const now = Date.now();
-                    const protectionWindow = 35 * 60 * 1000; // 35 min (Findy sensor push interval = 30 min)
+                    const intervalMin = (typeof window.__sensorReportingIntervalMinutes === 'number' ? window.__sensorReportingIntervalMinutes : 30);
+                    const protectionWindow = (intervalMin + 5) * 60 * 1000;
                     data.data[key] = data.data[key].map(serverBin => {
                         const recent = window._recentlyCollectedBins[serverBin.id];
                         if (recent && (now - recent.timestamp) < protectionWindow && serverBin.fill !== 0) {

@@ -757,7 +757,7 @@ class DatabaseManager {
                         }
                     }
                 }
-            } else if ((key === 'driverLocations' || key === 'analytics') && typeof value === 'object' && !Array.isArray(value)) {
+            } else if ((key === 'driverLocations' || key === 'analytics' || key === 'settings') && typeof value === 'object' && !Array.isArray(value)) {
                 const collection = this.mongoDb.collection(key);
                 
                 // Use updateOne with $set and $setOnInsert for key-value pairs
@@ -864,6 +864,17 @@ class DatabaseManager {
                     result.analytics[doc.key] = doc.value;
                 }
             });
+            
+            try {
+                const settingsCollection = this.mongoDb.collection('settings');
+                const settingsDocs = await settingsCollection.find({}).toArray();
+                result.settings = {};
+                settingsDocs.forEach(doc => {
+                    if (doc.key != null) result.settings[doc.key] = doc.value;
+                });
+            } catch (e) {
+                result.settings = {};
+            }
             
             result.deletedBins = await this.getDeletedBins();
             result.initialized = true;

@@ -3622,6 +3622,31 @@
         <div id="admin" class="content-section" style="display: none;">
             <h1 style="font-size: 2rem; margin-bottom: 2rem;">Admin Control Panel</h1>
             
+            <!-- Sensor data settings (reporting interval – sensors send fill data at this cadence) -->
+            <div class="glass-card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">
+                    <i class="fas fa-clock"></i> Sensor Fill Data Interval
+                </h3>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">Sensors send bin fill data to the platform at this interval. Adjust if your hardware sends more or less frequently (protection window for driver collections uses this + 5 min).</p>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <label for="sensorReportingIntervalMinutes" style="color: #e2e8f0;">Reporting interval (minutes):</label>
+                    <select id="sensorReportingIntervalMinutes" class="admin-settings-select" style="min-width: 120px; padding: 0.5rem 0.75rem; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.2); color: #f1f5f9;">
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="30" selected>30</option>
+                        <option value="45">45</option>
+                        <option value="60">60</option>
+                        <option value="90">90</option>
+                        <option value="120">120</option>
+                    </select>
+                    <button type="button" class="btn btn-primary" id="saveSensorIntervalBtn">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <span id="sensorIntervalStatus" style="color: #94a3b8; font-size: 0.85rem;"></span>
+                </div>
+            </div>
+            
             <!-- Admin Action Buttons -->
             <div class="glass-card" style="margin-bottom: 2rem;">
                 <h3 style="margin-bottom: 1rem;">

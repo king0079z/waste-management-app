@@ -425,6 +425,9 @@ class WasteManagementApp {
         const user = authManager.getCurrentUser();
         console.log('Handling successful login for:', user.name, '(' + user.type + ')');
 
+        // Load sensor reporting interval from server (used by sync/websocket protection window)
+        this.loadSensorIntervalSetting();
+
         // So driver→manager chat is received: identify this WebSocket as admin/manager on the server
         if (typeof window.updateWebSocketClientInfo === 'function') {
             setTimeout(function() { window.updateWebSocketClientInfo(); }, 300);
@@ -1840,9 +1843,54 @@ class WasteManagementApp {
         }).join('');
     }
 
+    async loadSensorIntervalSetting() {
+        const selectEl = document.getElementById('sensorReportingIntervalMinutes');
+        const statusEl = document.getElementById('sensorIntervalStatus');
+        const saveBtn = document.getElementById('saveSensorIntervalBtn');
+        try {
+            const res = await fetch(window.location.origin + '/api/settings');
+            const json = await res.json();
+            const min = (json.settings && json.settings.sensorReportingIntervalMinutes) || 30;
+            const val = Math.max(5, Math.min(120, Number(min)));
+            window.__sensorReportingIntervalMinutes = val;
+            if (selectEl) selectEl.value = String(val);
+        } catch (e) {
+            window.__sensorReportingIntervalMinutes = 30;
+            if (statusEl) statusEl.textContent = 'Using default 30 min';
+        }
+        if (saveBtn && !saveBtn._sensorIntervalBound) {
+            saveBtn._sensorIntervalBound = true;
+            saveBtn.addEventListener('click', async () => {
+                const v = Math.max(5, Math.min(120, parseInt(selectEl.value, 10) || 30));
+                statusEl.textContent = 'Saving…';
+                try {
+                    const res = await fetch(window.location.origin + '/api/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sensorReportingIntervalMinutes: v })
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        window.__sensorReportingIntervalMinutes = v;
+                        statusEl.textContent = 'Saved. Protection window: ' + (v + 5) + ' min';
+                        if (this.showAlert) this.showAlert('Settings saved', 'Sensor reporting interval set to ' + v + ' minutes.', 'success');
+                    } else {
+                        statusEl.textContent = 'Save failed';
+                    }
+                } catch (e) {
+                    statusEl.textContent = 'Error';
+                    if (this.showAlert) this.showAlert('Error', (e && e.message) || 'Failed to save settings', 'danger');
+                }
+            });
+        }
+    }
+
     loadAdminPanel() {
         // Load admin panel data
         const stats = dataManager.getSystemStats();
+        
+        // Fetch and apply sensor reporting interval setting (admin-adjustable)
+        this.loadSensorIntervalSetting();
         
         // Update system stats
         document.getElementById('totalUsersCount').textContent = stats.totalUsers;
