@@ -99,7 +99,7 @@ class EnhancedMessagingSystem {
             });
         }
         
-        // When tab is hidden: stop polling so the browser doesn't queue many ticks and freeze UI when tab becomes visible again
+        // When tab is hidden: stop polling. When visible: defer load so we don't block (avoids "page unresponsive" on mobile)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.stopDriverMessagePoll();
@@ -107,10 +107,9 @@ class EnhancedMessagingSystem {
             }
             this.updateCurrentUser();
             if (this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id) {
-                // Defer load so we don't block first paint; use debounced load to avoid stacking with poll
                 const driverId = this.currentUser.id;
-                setTimeout(() => this.loadDriverMessagesDebounced(driverId), 100);
-                setTimeout(() => this.startDriverMessagePoll(), 2500);
+                setTimeout(() => this.loadDriverMessagesDebounced(driverId), 2800);
+                setTimeout(() => this.startDriverMessagePoll(), 4500);
             }
         });
     }

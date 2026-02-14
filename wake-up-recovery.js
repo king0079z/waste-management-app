@@ -128,49 +128,45 @@ class WakeUpRecoverySystem {
         if (!wasInBackground) return;
         
         this.driverReconnectDebounce = now;
-        
-        const doReconnect = () => {
+
+        // Defer ALL work so the main thread is free when tab becomes visible (avoids "page unresponsive" on mobile)
+        setTimeout(function doReconnect() {
             try {
-                // 1. Reconnect WebSocket so driver is connected to server again
                 if (window.webSocketManager && typeof window.webSocketManager.reconnect === 'function') {
                     window.webSocketManager.reconnect();
                 }
-                // 2. Full sync from server (routes, data)
-                if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
-                    syncManager.syncFromServer().then(() => {
-                        if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                            window.app.loadDriverRoutes();
-                        }
-                    }).catch(() => {
-                        if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                            window.app.loadDriverRoutes();
-                        }
-                    });
-                } else if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                    window.app.loadDriverRoutes();
-                }
-                // 3. Re-identify WebSocket as driver (after a short delay so connection is up)
-                if (typeof window.updateWebSocketClientInfo === 'function') {
-                    setTimeout(() => { window.updateWebSocketClientInfo(); }, 800);
-                }
-                // 4. Restart GPS tracking so location is sent again
                 if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
                     window.mapManager.startDriverTracking();
                 }
-                // 5. Refetch chat messages (debounced to avoid freeze)
-                if (user && user.id && window.enhancedMessaging) {
-                    if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
-                        window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
-                    } else if (typeof window.enhancedMessaging.loadDriverMessages === 'function') {
-                        window.enhancedMessaging.loadDriverMessages(user.id);
-                    }
+                if (typeof window.updateWebSocketClientInfo === 'function') {
+                    setTimeout(function() { window.updateWebSocketClientInfo(); }, 500);
                 }
+                setTimeout(function() {
+                    if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
+                        syncManager.syncFromServer().then(function() {
+                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                                window.app.loadDriverRoutes();
+                            }
+                        }).catch(function() {
+                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                                window.app.loadDriverRoutes();
+                            }
+                        });
+                    } else if (window.app && typeof window.app.loadDriverRoutes === 'function') {
+                        window.app.loadDriverRoutes();
+                    }
+                    if (user && user.id && window.enhancedMessaging) {
+                        if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
+                            window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
+                        } else if (typeof window.enhancedMessaging.loadDriverMessages === 'function') {
+                            window.enhancedMessaging.loadDriverMessages(user.id);
+                        }
+                    }
+                }, 600);
             } catch (e) {
                 console.warn('Driver reconnection step failed:', e && e.message);
             }
-        };
-        
-        doReconnect();
+        }, 2000);
     }
     
     async performRecovery(reason = 'unknown') {
