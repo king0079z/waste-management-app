@@ -85,11 +85,12 @@ class SyncManager {
             this.isOnline = false;
         });
 
-        // Page visibility for sync optimization
+        // Page visibility: run sync when tab becomes visible, but NOT for driver (causes main_thread_freeze on Android)
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && this.syncEnabled && this.isOnline) {
-                this.syncFromServer();
-            }
+            if (document.hidden || !this.syncEnabled || !this.isOnline) return;
+            const user = (typeof authManager !== 'undefined' && authManager && typeof authManager.getCurrentUser === 'function') ? authManager.getCurrentUser() : null;
+            if (user && user.type === 'driver') return;
+            this.syncFromServer();
         });
     }
 
@@ -99,9 +100,10 @@ class SyncManager {
         const syncIntervalMs = 60000; // 60 seconds (increased from 30s)
         
         this.syncInterval = setInterval(() => {
-            if (this.isOnline && this.syncEnabled && !this.isSyncing) {
-                this.performIntelligentSync();
-            }
+            if (!this.isOnline || !this.syncEnabled || this.isSyncing) return;
+            const user = (typeof authManager !== 'undefined' && authManager && typeof authManager.getCurrentUser === 'function') ? authManager.getCurrentUser() : null;
+            if (user && user.type === 'driver') return;
+            this.performIntelligentSync();
         }, syncIntervalMs);
         
         console.log(`🔄 Periodic sync started (${syncIntervalMs/1000}s interval)`);
