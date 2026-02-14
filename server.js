@@ -3348,6 +3348,19 @@ server.listen(PORT, () => {
     }).catch(error => {
         console.error('❌ Failed to initialize sensor polling:', error);
     });
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        const fallback = PORT === 8080 ? 3001 : 8080;
+        console.warn(`⚠️ Port ${PORT} in use, trying http://localhost:${fallback} ...`);
+        server.listen(fallback, () => {
+            console.log(`✅ Server running at http://localhost:${fallback}`);
+            console.log('🔌 WebSocket server ready');
+            waitForDatabaseAndStartPolling().then(success => {}).catch(e => console.error('❌ Sensor polling:', e));
+        });
+    } else {
+        console.error('❌ Server error:', err);
+        process.exit(1);
+    }
 });
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
