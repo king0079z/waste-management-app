@@ -110,7 +110,7 @@ class EnhancedMessagingSystem {
             });
         }
         
-        // When tab is hidden: stop polling. When visible: defer load so we don't block (avoids "page unresponsive" on mobile)
+        // When tab is hidden: stop polling. When visible: only start poll (no message load – avoids main_thread_freeze)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.stopDriverMessagePoll();
@@ -118,9 +118,7 @@ class EnhancedMessagingSystem {
             }
             this.updateCurrentUser();
             if (this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id) {
-                const driverId = this.currentUser.id;
-                setTimeout(() => this.loadDriverMessagesDebounced(driverId), 5500);
-                setTimeout(() => this.startDriverMessagePoll(), 8000);
+                setTimeout(() => this.startDriverMessagePoll(), 3000);
             }
         });
     }

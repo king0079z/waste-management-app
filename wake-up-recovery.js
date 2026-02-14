@@ -135,8 +135,9 @@ class WakeUpRecoverySystem {
         this.driverReconnectDebounce = now;
         window.__driverReconnectScheduledAt = now;
 
-        // Defer ALL work to 5s so the page stays responsive; run sync/chat in requestIdleCallback to avoid "updating" freeze
-        var delayMs = 5000;
+        // Driver return-from-background: ONLY reconnect WebSocket + tracking. No sync, no routes, no chat load.
+        // Sync/chat are the main cause of main_thread_freeze on Android; they run on periodic timer or when user opens Messages/Routes.
+        var delayMs = 2000;
         setTimeout(function doReconnect() {
             try {
                 if (window.webSocketManager && typeof window.webSocketManager.reconnect === 'function') {
@@ -147,45 +148,6 @@ class WakeUpRecoverySystem {
                 }
                 if (typeof window.updateWebSocketClientInfo === 'function') {
                     setTimeout(function() { window.updateWebSocketClientInfo(); }, 500);
-                }
-                function runSyncOnly() {
-                    if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
-                        syncManager.syncFromServer().then(runRoutesAndChat).catch(runRoutesAndChat);
-                    } else {
-                        runRoutesAndChat();
-                    }
-                }
-                function runRoutesAndChat() {
-                    if (typeof requestIdleCallback !== 'undefined') {
-                        requestIdleCallback(function() {
-                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                                window.app.loadDriverRoutes();
-                            }
-                            if (user && user.id && window.enhancedMessaging) {
-                                if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
-                                    window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
-                                } else if (typeof window.enhancedMessaging.loadDriverMessages === 'function') {
-                                    window.enhancedMessaging.loadDriverMessages(user.id);
-                                }
-                            }
-                        }, { timeout: 2000 });
-                    } else {
-                        setTimeout(function() {
-                            if (window.app && typeof window.app.loadDriverRoutes === 'function') {
-                                window.app.loadDriverRoutes();
-                            }
-                            if (user && user.id && window.enhancedMessaging) {
-                                if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
-                                    window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
-                                }
-                            }
-                        }, 0);
-                    }
-                }
-                if (typeof requestIdleCallback !== 'undefined') {
-                    requestIdleCallback(runSyncOnly, { timeout: 1500 });
-                } else {
-                    setTimeout(runSyncOnly, 0);
                 }
             } catch (e) {
                 console.warn('Driver reconnection step failed:', e && e.message);
