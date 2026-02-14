@@ -101,7 +101,12 @@ class WakeUpRecoverySystem {
         const cooldownOk = (now - this.lastRecoveryTime) >= this.recoveryCooldownMs;
         const wasRecentlyHidden = this.lastHiddenTime > 0 && (now - this.lastHiddenTime) < 120000;
 
-        if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering && cooldownOk && wasRecentlyHidden) {
+        // Driver: if we already scheduled our own reconnect (return from background), skip full recovery to avoid "Reconnecting..." while we're syncing
+        const driverReconnectRecently = typeof window !== 'undefined' && window.__driverReconnectScheduledAt && (now - window.__driverReconnectScheduledAt) < 20000;
+        const auth = (typeof authManager !== 'undefined' && authManager != null && typeof authManager.getCurrentUser === 'function') ? authManager : null;
+        const user = auth ? auth.getCurrentUser() : null;
+        const isDriver = user && user.type === 'driver';
+        if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering && cooldownOk && wasRecentlyHidden && !(isDriver && driverReconnectRecently)) {
             console.log(`🚨 Wake-up detected! Time gap: ${Math.round(timeSinceLastCheck / 1000)}s`);
             this.performRecovery('wake_from_sleep');
         } else if (timeSinceLastCheck > this.freezeThreshold && !wasRecentlyHidden) {
@@ -128,8 +133,10 @@ class WakeUpRecoverySystem {
         if (!wasInBackground) return;
         
         this.driverReconnectDebounce = now;
+        window.__driverReconnectScheduledAt = now;
 
-        // Defer ALL work so the main thread is free when tab becomes visible (avoids "page unresponsive" on mobile)
+        // Defer ALL work to 5s so the page stays responsive; run sync/chat in requestIdleCallback to avoid "updating" freeze
+        var delayMs = 5000;
         setTimeout(function doReconnect() {
             try {
                 if (window.webSocketManager && typeof window.webSocketManager.reconnect === 'function') {
@@ -141,7 +148,7 @@ class WakeUpRecoverySystem {
                 if (typeof window.updateWebSocketClientInfo === 'function') {
                     setTimeout(function() { window.updateWebSocketClientInfo(); }, 500);
                 }
-                setTimeout(function() {
+                function runSyncAndChat() {
                     if (typeof syncManager !== 'undefined' && typeof syncManager.syncFromServer === 'function') {
                         syncManager.syncFromServer().then(function() {
                             if (window.app && typeof window.app.loadDriverRoutes === 'function') {
@@ -162,11 +169,16 @@ class WakeUpRecoverySystem {
                             window.enhancedMessaging.loadDriverMessages(user.id);
                         }
                     }
-                }, 600);
+                }
+                if (typeof requestIdleCallback !== 'undefined') {
+                    requestIdleCallback(runSyncAndChat, { timeout: 1500 });
+                } else {
+                    setTimeout(runSyncAndChat, 0);
+                }
             } catch (e) {
                 console.warn('Driver reconnection step failed:', e && e.message);
             }
-        }, 2000);
+        }, delayMs);
     }
     
     async performRecovery(reason = 'unknown') {

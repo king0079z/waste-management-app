@@ -108,8 +108,8 @@ class EnhancedMessagingSystem {
             this.updateCurrentUser();
             if (this.currentUser && this.currentUser.type === 'driver' && this.currentUser.id) {
                 const driverId = this.currentUser.id;
-                setTimeout(() => this.loadDriverMessagesDebounced(driverId), 2800);
-                setTimeout(() => this.startDriverMessagePoll(), 4500);
+                setTimeout(() => this.loadDriverMessagesDebounced(driverId), 5500);
+                setTimeout(() => this.startDriverMessagePoll(), 8000);
             }
         });
     }
@@ -417,6 +417,8 @@ class EnhancedMessagingSystem {
 
         const messages = this.messages[driverId] || [];
         const welcomeMessage = container.querySelector('.welcome-message');
+        // Yield before heavy DOM work so wake-up / open doesn't freeze the page
+        await new Promise(function(r) { (typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(r) : setTimeout(r, 0)); });
         container.innerHTML = '';
 
         if (messages.length === 0) {
