@@ -174,6 +174,12 @@
         /🔄 Fetching sensor data for \d+ bins before first paint/i,
         /🔄 Force refreshing bins on map/i,
         /Tracking Prevention blocked access to storage/i,
+        /Server route list for driver is empty.*removed deleted routes/i,
+        /First GPS attempt failed, retrying getCurrentPosition/i,
+        /✓ WebSocket reconnect triggered/i,
+        /✓ Driver sync from server/i,
+        /✓ Driver routes refreshed/i,
+        /Not a driver account, skipping GPS tracking/i,
         /Fleet Manager not found/i,
         // Findy bin-sensor: missing fields / API structure (avoid console spam)
         /Findy API response may not contain|Check the raw API response structure/i,
@@ -255,7 +261,14 @@
         /Final map refresh complete|Refreshing map to show sensor/i,
         /Live monitoring updates stopped|Live Alert:.*traffic/i
     ];
-    
+
+    // Errors to suppress (browser/extension noise, not app bugs)
+    const SUPPRESS_ERROR_PATTERNS = [
+        /Tracking Prevention blocked access to storage/i,
+        /message channel closed before a response was received/i,
+        /asynchronous response by returning true/i
+    ];
+
     // Patterns to always allow (errors only; "Waiting for critical systems" is suppressed below)
     const ALLOW_PATTERNS = [
         /^❌|^Error|^error|CRITICAL ERROR|CRITICAL:|FATAL/i,
@@ -268,7 +281,17 @@
         const originalLog = console.log;
         const originalWarn = console.warn;
         const originalInfo = console.info;
-        
+        const originalError = console.error;
+
+        // Override console.error to suppress known browser/extension noise
+        console.error = function(...args) {
+            const message = args.map(a => String(a)).join(' ');
+            if (SUPPRESS_ERROR_PATTERNS.some(function(p) { return p.test(message); })) {
+                return;
+            }
+            return originalError.apply(console, args);
+        };
+
         // Override console.log
         console.log = function(...args) {
             const message = args.map(a => String(a)).join(' ');
@@ -320,6 +343,7 @@
             console.log = originalLog;
             console.warn = originalWarn;
             console.info = originalInfo;
+            console.error = originalError;
             originalLog('✅ Full logging enabled');
         };
         

@@ -1473,12 +1473,12 @@ app.post('/api/driver/:driverId/location', async (req, res) => {
         const { driverId } = req.params;
         const { lat, lng, timestamp, accuracy, speed, heading } = req.body;
         
-        // Server-side throttling (2s to avoid 429 under load while keeping map live)
+        // Server-side throttling (3s to match client; avoids 429 when GPS + reconnect fire close together)
         const now = Date.now();
         const rateLimit = driverLocationRateLimits.get(driverId) || { lastUpdate: 0, count: 0 };
         
         const timeSinceLastUpdate = now - rateLimit.lastUpdate;
-        const throttleMs = 2000;
+        const throttleMs = 3000;
         
         if (timeSinceLastUpdate < throttleMs) {
             res.status(429).json({ success: false, error: 'Rate limit exceeded', retryAfter: Math.ceil((throttleMs - timeSinceLastUpdate) / 1000) });

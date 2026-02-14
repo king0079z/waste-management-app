@@ -5271,7 +5271,9 @@
 
     <!-- Application Scripts - Load in correct order with AI/ML Enhancement -->
     
-    <!-- Production Logging - MUST BE FIRST to reduce console noise -->
+    <!-- Safe storage FIRST: if Tracking Prevention blocks localStorage, replace with in-memory so no repeated errors -->
+    <script src="safe-storage.js"></script>
+    <!-- Production Logging - reduce console noise (including Tracking Prevention / extension messages) -->
     <script src="production-logging.js"></script>
     
     <!-- EMERGENCY FIX FOR LIVE MONITORING POPUP -->
