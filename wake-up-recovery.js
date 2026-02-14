@@ -1,4 +1,5 @@
 // wake-up-recovery.js - Automatic Recovery from PC Sleep/Wake
+// World-class: never blocks main thread, no infinite recovery loop, cooldown and timeouts.
 
 console.log('🛡️ Wake-up Recovery System Loading...');
 
@@ -13,75 +14,97 @@ class WakeUpRecoverySystem {
         this.freezeThreshold = 60000;  // 60 seconds = full recovery
         this.mobileBackgroundThreshold = 3000; // 3s hidden = run driver reconnection (phone lock)
         this.driverReconnectDebounce = 0;      // Avoid double-run when visibility + focus fire together
-        
+        this.lastRecoveryTime = 0;     // Cooldown: don't run full recovery more than once per 5 min
+        this.recoveryCooldownMs = 5 * 60 * 1000; // 5 minutes
+        this.wakeCheckScheduled = null; // Debounce visibility+focus to one delayed check
+        this.stepTimeoutMs = 12000;    // Max 12s per recovery step so we never hang
+
         this.init();
     }
-    
+
     init() {
         console.log('🔧 Initializing Wake-up Recovery System...');
-        
-        // 1. Monitor visibility changes (tab hidden/shown) – critical for mobile when driver locks phone
+
+        // 1. Visibility: when hidden stop heartbeat so browser doesn't queue ticks; when visible run lightweight reconnect and one delayed wake check
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.lastHiddenTime = Date.now();
+                this.stopHeartbeat();
             } else {
-                // Page visible again (e.g. driver unlocked phone) – reconnect driver app immediately
+                this.lastActiveTime = Date.now();
                 this.reconnectDriverWhenVisible();
-                this.checkForWakeUp();
+                this.scheduleSingleWakeCheck();
+                this.startHeartbeat();
             }
         });
-        
-        // 2. Monitor page focus (also fires when returning to app)
+
+        // 2. Focus: same as visible – lightweight reconnect and one wake check (debounced with visibility)
         window.addEventListener('focus', () => {
+            if (document.hidden) return;
+            this.lastActiveTime = Date.now();
             this.reconnectDriverWhenVisible();
-            this.checkForWakeUp();
+            this.scheduleSingleWakeCheck();
         });
-        
-        // 3. Monitor online/offline status
+
+        // 3. Network back online – trigger one recovery (cooldown still applies)
         window.addEventListener('online', () => {
             console.log('🌐 Network back online - recovering...');
-            this.performRecovery('network_restored');
+            this.lastActiveTime = Date.now() - (this.freezeThreshold + 1000);
+            this.scheduleSingleWakeCheck();
         });
-        
+
         window.addEventListener('offline', () => {
             console.log('📴 Network offline detected');
         });
-        
-        // 4. Heartbeat monitoring (detect long pauses)
+
+        // 4. Heartbeat only when tab is visible (started in visibilitychange when visible)
         this.startHeartbeat();
-        
+
         // 5. Override setTimeout and setInterval to track them
         this.interceptTimers();
-        
+
         console.log('✅ Wake-up Recovery System Active');
     }
-    
+
+    stopHeartbeat() {
+        if (this.checkInterval) {
+            clearInterval(this.checkInterval);
+            this.checkInterval = null;
+        }
+    }
+
     startHeartbeat() {
-        // Check every 5 seconds if we've been away too long
+        this.stopHeartbeat();
         this.checkInterval = setInterval(() => {
+            if (document.hidden) return;
             const now = Date.now();
             const timeSinceLastCheck = now - this.lastActiveTime;
-            
-            // If more than freeze threshold, we likely woke from sleep
             if (timeSinceLastCheck > this.freezeThreshold) {
                 console.warn(`⚠️ Long pause detected: ${Math.round(timeSinceLastCheck / 1000)}s`);
                 this.checkForWakeUp();
             }
-            
             this.lastActiveTime = now;
         }, 5000);
     }
-    
+
+    scheduleSingleWakeCheck() {
+        if (this.wakeCheckScheduled) clearTimeout(this.wakeCheckScheduled);
+        this.wakeCheckScheduled = setTimeout(() => {
+            this.wakeCheckScheduled = null;
+            this.checkForWakeUp();
+        }, 2000);
+    }
+
     checkForWakeUp() {
         const now = Date.now();
         const timeSinceLastCheck = now - this.lastActiveTime;
-        
-        // If more than threshold, trigger recovery
-        if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering) {
+        const cooldownOk = (now - this.lastRecoveryTime) >= this.recoveryCooldownMs;
+
+        if (timeSinceLastCheck > this.freezeThreshold && !this.isRecovering && cooldownOk) {
             console.log(`🚨 Wake-up detected! Time gap: ${Math.round(timeSinceLastCheck / 1000)}s`);
             this.performRecovery('wake_from_sleep');
         }
-        
+
         this.lastActiveTime = now;
     }
     
@@ -129,9 +152,13 @@ class WakeUpRecoverySystem {
                 if (window.mapManager && typeof window.mapManager.startDriverTracking === 'function') {
                     window.mapManager.startDriverTracking();
                 }
-                // 5. Refetch chat messages so driver sees new manager messages without refresh (mobile WebSocket can miss them)
-                if (user && user.id && window.enhancedMessaging && typeof window.enhancedMessaging.loadDriverMessages === 'function') {
-                    window.enhancedMessaging.loadDriverMessages(user.id);
+                // 5. Refetch chat messages (debounced to avoid freeze)
+                if (user && user.id && window.enhancedMessaging) {
+                    if (typeof window.enhancedMessaging.loadDriverMessagesDebounced === 'function') {
+                        window.enhancedMessaging.loadDriverMessagesDebounced(user.id);
+                    } else if (typeof window.enhancedMessaging.loadDriverMessages === 'function') {
+                        window.enhancedMessaging.loadDriverMessages(user.id);
+                    }
                 }
             } catch (e) {
                 console.warn('Driver reconnection step failed:', e && e.message);
@@ -146,35 +173,43 @@ class WakeUpRecoverySystem {
             console.log('⏳ Recovery already in progress...');
             return;
         }
-        
+
         this.isRecovering = true;
+        this.lastRecoveryTime = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('🔄 STARTING RECOVERY PROCESS');
         console.log(`Reason: ${reason}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        
+
         try {
-            // Show recovery notification
             this.showRecoveryNotification();
-            
-            // Step 1: Clear stuck timers
-            await this.clearStuckTimers();
-            
-            // Step 2: Reload data
-            await this.reloadData();
-            
-            // Step 3: Reconnect integrations
-            await this.reconnectIntegrations();
-            
-            // Step 4: Refresh UI
-            await this.refreshUI();
-            
-            // Step 5: Restart real-time updates
-            await this.restartRealTimeUpdates();
-            
+
+            const step = (fn) => Promise.race([
+                Promise.resolve(fn()),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('step_timeout')), this.stepTimeoutMs))
+            ]).catch(err => {
+                if (err && err.message === 'step_timeout') console.warn('⚠️ Recovery step timed out (continuing)');
+                else console.warn('⚠️ Recovery step error:', err);
+            });
+
+            const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+            await step(() => this.clearStuckTimers());
+            await yieldToMain();
+
+            await step(() => this.reloadData());
+            await yieldToMain();
+
+            await step(() => this.reconnectIntegrations());
+            await yieldToMain();
+
+            await step(() => this.refreshUI());
+            await yieldToMain();
+
+            await step(() => this.restartRealTimeUpdates());
+
             console.log('✅ Recovery Complete!');
             this.showSuccessNotification();
-            
         } catch (error) {
             console.error('❌ Recovery failed:', error);
             this.showErrorNotification(error);
@@ -186,29 +221,35 @@ class WakeUpRecoverySystem {
     
     async clearStuckTimers() {
         console.log('🧹 Step 1: Clearing stuck timers...');
-        
-        // Clear all tracked intervals (except our heartbeat)
-        this.activeIntervals.forEach(intervalId => {
-            if (intervalId !== this.checkInterval) {
-                try {
-                    clearInterval(intervalId);
-                    console.log(`  ✓ Cleared interval ${intervalId}`);
-                } catch (e) {
-                    console.warn(`  ⚠️ Failed to clear interval ${intervalId}:`, e);
-                }
+        const maxClear = 200; // Cap so we never block main thread for long
+        let cleared = 0;
+
+        const intervals = Array.from(this.activeIntervals);
+        for (const intervalId of intervals) {
+            if (intervalId === this.checkInterval) continue;
+            if (cleared >= maxClear) break;
+            try {
+                clearInterval(intervalId);
+                this.activeIntervals.delete(intervalId);
+                cleared++;
+            } catch (e) {
+                this.activeIntervals.delete(intervalId);
             }
-        });
-        
-        // Clear all tracked timeouts
-        this.activeTimers.forEach(timerId => {
+        }
+
+        const timers = Array.from(this.activeTimers);
+        for (const timerId of timers) {
+            if (cleared >= maxClear) break;
             try {
                 clearTimeout(timerId);
-                console.log(`  ✓ Cleared timeout ${timerId}`);
+                this.activeTimers.delete(timerId);
+                cleared++;
             } catch (e) {
-                console.warn(`  ⚠️ Failed to clear timeout ${timerId}:`, e);
+                this.activeTimers.delete(timerId);
             }
-        });
-        
+        }
+
+        if (cleared > 0) console.log(`  ✓ Cleared ${cleared} timer(s)`);
         console.log('✅ Timers cleared');
     }
     
