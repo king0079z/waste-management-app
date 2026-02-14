@@ -19,7 +19,10 @@ class EnhancedMessagingSystem {
         this._loadAdminMessagesInProgress = false;
         this._loadAdminMessagesPendingId = null;
         this._handleStorageUpdateTimer = null;
-        
+        this._saveMessagesToStorageTimer = null;
+        this._saveMessagesPending = false;
+        this.MAX_STORED_MESSAGES_PER_DRIVER = 300;
+
         this.init();
     }
 
@@ -224,6 +227,29 @@ class EnhancedMessagingSystem {
         }
     }
 
+    saveMessagesToStorageDebounced() {
+        if (this._saveMessagesToStorageTimer) clearTimeout(this._saveMessagesToStorageTimer);
+        this._saveMessagesPending = true;
+        const self = this;
+        this._saveMessagesToStorageTimer = setTimeout(function() {
+            self._saveMessagesToStorageTimer = null;
+            self._saveMessagesPending = false;
+            const doWrite = function() {
+                try {
+                    localStorage.setItem('driverMessages', JSON.stringify(self.messages));
+                    localStorage.setItem('unreadMessageCounts', JSON.stringify(self.unreadCounts));
+                } catch (e) {
+                    console.error('❌ Error saving messages to storage:', e);
+                }
+            };
+            if (typeof requestIdleCallback !== 'undefined') {
+                requestIdleCallback(doWrite, { timeout: 2000 });
+            } else {
+                setTimeout(doWrite, 0);
+            }
+        }, 600);
+    }
+
     // ================== DRIVER MESSAGING FUNCTIONS ==================
 
     handleDriverMessageInput(event) {
@@ -382,8 +408,9 @@ class EnhancedMessagingSystem {
                     if (!byId.has(id) || (m.serverTimestamp && !byId.get(id).serverTimestamp)) byId.set(id, m);
                 });
                 const merged = Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
-                this.messages[driverId] = merged;
-                this.saveMessagesToStorage();
+                const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+                this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
+                this.saveMessagesToStorageDebounced();
             }
         } catch (e) {
             console.warn('Could not load driver message history from server:', e.message);
@@ -633,8 +660,9 @@ class EnhancedMessagingSystem {
                     if (!byId.has(id) || (m.serverTimestamp && !byId.get(id).serverTimestamp)) byId.set(id, m);
                 });
                 const merged = Array.from(byId.values()).sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
-                this.messages[driverId] = merged;
-                this.saveMessagesToStorage();
+                const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+                this.messages[driverId] = merged.length > max ? merged.slice(-max) : merged;
+                this.saveMessagesToStorageDebounced();
             }
         } catch (e) {
             console.warn('Could not load message history from server:', e.message);
@@ -749,17 +777,19 @@ class EnhancedMessagingSystem {
         if (!this.messages[driverId]) {
             this.messages[driverId] = [];
         }
-        
         this.messages[driverId].push(messageData);
-        
-        // Update unread count for the recipient
+        const max = this.MAX_STORED_MESSAGES_PER_DRIVER;
+        if (this.messages[driverId].length > max) {
+            this.messages[driverId] = this.messages[driverId].slice(-max);
+        }
+
         const recipientType = messageData.sender === 'driver' ? 'admin' : 'driver';
         if (!this.unreadCounts[driverId]) {
             this.unreadCounts[driverId] = { admin: 0, driver: 0 };
         }
         this.unreadCounts[driverId][recipientType]++;
-        
-        this.saveMessagesToStorage();
+
+        this.saveMessagesToStorageDebounced();
         this.updateUnreadBadges();
         // Refresh driver bottom nav message badge (same-tab: storage event does not fire)
         document.dispatchEvent(new CustomEvent('driverNavBadgesRefresh'));
@@ -831,7 +861,7 @@ class EnhancedMessagingSystem {
     markMessagesAsRead(driverId, userType) {
         if (this.unreadCounts[driverId]) {
             this.unreadCounts[driverId][userType] = 0;
-            this.saveMessagesToStorage();
+            this.saveMessagesToStorageDebounced();
             this.updateUnreadBadges();
         }
     }
