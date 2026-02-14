@@ -3303,70 +3303,41 @@ function handleTypingIndicator(senderWs, message) {
 function broadcastToAdminClients(message) {
     let adminCount = 0;
     let totalConnections = 0;
-    let connectionsWithUserId = 0;
-    
-    console.log(`🔍 Broadcasting to admin clients among ${clients.size} total clients`);
-    
+
     clients.forEach(client => {
+        if (client.readyState !== 1) return;
         totalConnections++;
-        if (client.readyState === 1) { // WebSocket.OPEN
-            if (client.userId) {
-                connectionsWithUserId++;
-                console.log(`📋 Checking connection: userId=${client.userId}, userType=${client.userType}`);
-            }
-            
-            // Check if client is admin (userType is 'admin' OR userId exists but userType is not 'driver')
-            const isAdmin = client.userType === 'admin' || (client.userId && client.userType !== 'driver');
-            
-            if (isAdmin) {
-                try {
-                    client.send(JSON.stringify(message));
-                    adminCount++;
-                    console.log(`📡 Message sent to admin client: ${client.userId}`);
-                } catch (error) {
-                    console.error('Error sending message to admin client:', error);
-                }
-            } else {
-                console.log(`📋 Skipping non-admin client: userId=${client.userId}, userType=${client.userType}`);
+        const isAdmin = client.userType === 'admin' || (client.userId && client.userType !== 'driver');
+        if (isAdmin) {
+            try {
+                client.send(JSON.stringify(message));
+                adminCount++;
+            } catch (error) {
+                console.error('Error sending message to admin client:', error);
             }
         }
     });
-    
-    console.log(`📊 Admin broadcast summary: ${adminCount} admin clients reached out of ${totalConnections} total connections`);
-    console.log(`📡 Message broadcast to ${adminCount} admin clients`);
+
+    if (adminCount > 0 || totalConnections > 2) {
+        console.log(`📡 Admin broadcast: ${adminCount}/${totalConnections} clients`);
+    }
 }
 
 function broadcastToDriver(driverId, message) {
     let driverFound = false;
-    let totalConnections = 0;
-    let connectionsWithUserId = 0;
-    
-    console.log(`🔍 Looking for driver ${driverId} among ${clients.size} total clients`);
-    
+
     clients.forEach(client => {
-        totalConnections++;
-        if (client.readyState === 1) {
-            if (client.userId) {
-                connectionsWithUserId++;
-                console.log(`📋 Active connection found: userId=${client.userId}, userType=${client.userType}`);
-            } else {
-                console.log(`📋 Active connection found: userId=undefined, userType=undefined`);
-            }
-            
-            if (client.userId === driverId) {
-                try {
-                    client.send(JSON.stringify(message));
-                    driverFound = true;
-                    console.log(`📡 Message sent to driver ${driverId}`);
-                } catch (error) {
-                    console.error(`Error sending message to driver ${driverId}:`, error);
-                }
+        if (client.readyState !== 1) return;
+        if (client.userId === driverId) {
+            try {
+                client.send(JSON.stringify(message));
+                driverFound = true;
+            } catch (error) {
+                console.error(`Error sending message to driver ${driverId}:`, error);
             }
         }
     });
-    
-    console.log(`📊 Connection summary: ${totalConnections} total, ${connectionsWithUserId} with userId`);
-    
+
     if (!driverFound) {
         console.log(`⚠️ Driver ${driverId} not connected - message queued for next connection`);
     }

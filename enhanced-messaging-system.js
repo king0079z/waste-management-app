@@ -273,6 +273,12 @@ class EnhancedMessagingSystem {
     }
 
     sendQuickReply(message) {
+        const now = Date.now();
+        if (this._lastQuickReply && this._lastQuickReply.text === message && (now - this._lastQuickReply.at) < 2000) {
+            return;
+        }
+        this._lastQuickReply = { text: message, at: now };
+
         const messageData = {
             id: Date.now().toString(),
             sender: 'driver',
@@ -286,11 +292,8 @@ class EnhancedMessagingSystem {
 
         this.addMessage(this.currentUser.id, messageData);
         this.displayDriverMessage(messageData);
-        
-        // Send via WebSocket
+
         this.sendViaWebSocket(messageData);
-        
-        // Play send sound
         this.playMessageSound();
 
         console.log('⚡ Quick reply sent:', message);
