@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Autonautics Smart Waste Management - Powered by AI</title>
+    <!-- PWA: installable on Android and iPhone (Add to Home Screen) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Autonautics">
     
     <!-- Prevent Microsoft/Outlook credential manager popups -->
     <meta name="ms-credential-manager" content="off">
@@ -6302,6 +6308,14 @@
                 }
             }, 20000);
         })();
+    </script>
+    <!-- PWA: register service worker for installability on Android / iPhone -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('service-worker.js').then(function () {}).catch(function () {});
+            });
+        }
     </script>
 </body>
 </html>
