@@ -7,7 +7,7 @@
     <!-- PWA: installable on Android and iPhone (Add to Home Screen) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3a5f">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Autonautics">
     
@@ -1462,6 +1462,7 @@
                         </div>
                         <div class="driver-header-status">
                             <div id="driverStatusIndicator" class="driver-status-online">Online</div>
+                            <a href="#" id="driverHeaderGetAppLink" class="driver-header-get-app" onclick="event.preventDefault(); if(typeof window.showDriverInstallAppBanner==='function') window.showDriverInstallAppBanner(true);" title="Get the app">Get app</a>
                         </div>
                     </div>
 
@@ -1854,6 +1855,11 @@
                             </div>
                             <i class="fas fa-chevron-right driver-more-arrow"></i>
                         </button>
+                        <div class="driver-more-app-link-block" style="margin:0 0 12px;padding:10px 12px;background:#f0f4f8;border-radius:8px;border:1px solid #e0e6ed;">
+                            <strong style="font-size:0.9rem;">App link (open on your phone to install):</strong><br>
+                            <a id="driverMoreAppUrl" href="#" target="_blank" rel="noopener" style="color:#1e3a5f;word-break:break-all;font-size:0.85rem;">...</a>
+                            <button type="button" id="driverMoreCopyUrl" style="margin-left:8px;padding:6px 10px;border:1px solid #1e3a5f;border-radius:6px;background:#fff;color:#1e3a5f;cursor:pointer;font-size:0.85rem;">Copy link</button>
+                        </div>
                         <button class="driver-more-card" onclick="showDriverHistoryModal()">
                             <div class="driver-more-icon"><i class="fas fa-history"></i></div>
                             <div class="driver-more-text">
