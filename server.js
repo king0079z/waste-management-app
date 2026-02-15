@@ -926,6 +926,30 @@ app.use((req, res, next) => {
     next();
 });
 
+// PWA icons: serve FIRST (before static) to avoid 404 / manifest errors that can freeze the app
+const MINIMAL_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKMIQQAAAABJRU5ErkJggg==';
+const minimalPngBuffer = Buffer.from(MINIMAL_PNG_BASE64, 'base64');
+const icon192Path = path.join(__dirname, 'public', 'icons', 'icon-192.png');
+const icon512Path = path.join(__dirname, 'public', 'icons', 'icon-512.png');
+app.get('/icons/icon-192.png', function (req, res) {
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.type('image/png');
+    if (fs.existsSync(icon192Path)) {
+        res.sendFile(icon192Path);
+    } else {
+        res.send(minimalPngBuffer);
+    }
+});
+app.get('/icons/icon-512.png', function (req, res) {
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.type('image/png');
+    if (fs.existsSync(icon512Path)) {
+        res.sendFile(icon512Path);
+    } else {
+        res.send(minimalPngBuffer);
+    }
+});
+
 // Compress responses
 app.use(compression());
 
@@ -1685,10 +1709,34 @@ app.get('/api/driver/:driverId/routes', async (req, res) => {
     }
 });
 
-// Get driver message history (manager–driver communications)
+// Get driver message history (WhatsApp-style: paginated + delta)
+// Query: limit (default 50), before (ISO) = older than, since (ISO) = only newer than (delta)
 app.get('/api/driver/:driverId/messages', async (req, res) => {
     try {
         const { driverId } = req.params;
+        const limit = req.query.limit;
+        const before = req.query.before;
+        const since = req.query.since;
+        if (since !== undefined && since !== '') {
+            const result = await dbManager.getDriverMessagesPaginated(driverId, { limit: limit || 100, since });
+            return res.json({
+                success: true,
+                messages: result.messages || [],
+                hasMore: result.hasMore,
+                nextBefore: result.nextBefore,
+                timestamp: new Date().toISOString()
+            });
+        }
+        if (before !== undefined && before !== '' || limit !== undefined) {
+            const result = await dbManager.getDriverMessagesPaginated(driverId, { limit: limit || 50, before: before || undefined });
+            return res.json({
+                success: true,
+                messages: result.messages || [],
+                hasMore: result.hasMore,
+                nextBefore: result.nextBefore,
+                timestamp: new Date().toISOString()
+            });
+        }
         const messages = await dbManager.getDriverMessages(driverId);
         res.json({
             success: true,
@@ -2029,7 +2077,7 @@ app.post('/api/collections', async (req, res) => {
         const driverLng = collection.driverLng != null ? Number(collection.driverLng) : null;
         const MAX_COLLECTION_DISTANCE_METERS = 150;
 
-        if (collection.driverId) {
+        if (collection.driverId && !collection.sampleData) {
             if (driverLat == null || driverLng == null) {
                 console.warn(`Collection rejected: driver ${collection.driverId} did not send location for bin ${collection.binId}`);
                 return res.status(400).json({

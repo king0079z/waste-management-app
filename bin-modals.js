@@ -2972,6 +2972,7 @@ window.generateSampleBinTrend = function(binId) {
         // Add a collection every 2-3 days
         if (day % 3 === 0) {
             const collectionTime = new Date(date.getTime() + (12 * 60 * 60 * 1000));
+            const bin = dataManager.getBins().find(b => b.id === binId);
             dataManager.addCollection({
                 binId: binId,
                 driverId: currentUser.id,
@@ -2981,7 +2982,10 @@ window.generateSampleBinTrend = function(binId) {
                 temperature: 20 + Math.random() * 10,
                 timestamp: collectionTime.toISOString(),
                 vehicleId: 'DEMO-' + Math.floor(Math.random() * 100),
-                routeId: 'SAMPLE-ROUTE-' + day
+                routeId: 'SAMPLE-ROUTE-' + day,
+                sampleData: true,
+                driverLat: bin && bin.lat != null ? bin.lat : null,
+                driverLng: bin && bin.lng != null ? bin.lng : null
             });
         }
     }
@@ -3257,7 +3261,10 @@ window.generateSampleCollection = function(binId) {
         temperature: Math.floor(Math.random() * 15) + 18, // Random temp 18-33°C
         vehicleId: 'DEMO-' + Math.floor(Math.random() * 100),
         routeId: 'SAMPLE-ROUTE-' + Date.now(),
-        routeName: 'Demo Collection Route'
+        routeName: 'Demo Collection Route',
+        sampleData: true,
+        driverLat: bin.lat != null ? bin.lat : null,
+        driverLng: bin.lng != null ? bin.lng : null
     };
     
     // Add the collection
@@ -3301,7 +3308,10 @@ window.generateComprehensiveSampleData = function() {
                 vehicleId: 'DEMO-' + Math.floor(Math.random() * 100),
                 routeId: 'SAMPLE-ROUTE-' + daysAgo,
                 routeName: `Demo Route Day ${daysAgo}`,
-                timestamp: collectionDate.toISOString()
+                timestamp: collectionDate.toISOString(),
+                sampleData: true,
+                driverLat: bin.lat != null ? bin.lat : null,
+                driverLng: bin.lng != null ? bin.lng : null
             };
             
             // Manually set timestamp to avoid overriding
