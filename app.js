@@ -578,6 +578,13 @@ class WasteManagementApp {
         
         // Start periodic route checks for drivers (check every 30 seconds)
         this.startDriverRouteChecks();
+
+        // Show install-app notification for drivers on mobile (once per 7 days or until "Don't show again")
+        if (typeof window.showDriverInstallAppBanner === 'function') {
+            setTimeout(function () {
+                window.showDriverInstallAppBanner();
+            }, 2500);
+        }
     }
     
     startDriverRouteChecks() {
@@ -717,7 +724,10 @@ class WasteManagementApp {
             if (routes && routes.length > 0) {
                 console.log(`📋 Merged ${routes.length} server route(s) into dataManager for driver view`);
             } else {
-                console.log(`📋 Server route list for driver is empty – removed deleted routes from dataManager`);
+                if (!this._lastEmptyRoutesLog || Date.now() - this._lastEmptyRoutesLog > 60000) {
+                    this._lastEmptyRoutesLog = Date.now();
+                    console.log(`📋 Server route list for driver is empty – removed deleted routes from dataManager`);
+                }
             }
         } else if (!fromBroadcast && typeof syncManager !== 'undefined') {
             // Sync disabled: still try to fetch routes from server so deletions from admin are visible
